@@ -14,7 +14,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function owners() {
-      return ['you@example.com'];
+      return ['coach@example.com'];
     }
 
     function signedIn() {
