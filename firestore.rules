@@ -14,7 +14,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function owners() {
-      return ['coach@example.com'];
+      return ['rtrader2002@gmail.com'];
     }
 
     function signedIn() {
@@ -22,7 +22,9 @@ service cloud.firestore {
     }
 
     function isOwner() {
-      return signedIn() && request.auth.token.email in owners();
+      /* Google hands us the address lowercased; owners() is lowercase too, so
+         the config is forgiving of however the address was typed.            */
+      return signedIn() && request.auth.token.email.lower() in owners();
     }
 
     function approved() {

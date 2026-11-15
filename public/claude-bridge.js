@@ -143,6 +143,16 @@
     var member = await ensureMember(store, FS, me); /* access request */
     var owner = isOwnerEmail(me.email);
 
+    /* An owner whose record was filed before they were listed in ownerEmails
+       is still marked pending. Put that right rather than making them approve
+       themselves. The rules let an owner update any member record.           */
+    if (owner && member && member.status !== "approved") {
+      try {
+        await store.updateDoc(store.doc(FS, "members/" + me.uid), { status: "approved" });
+        member.status = "approved";
+      } catch (e) { console.warn("[claude-bridge] could not self-approve", e); }
+    }
+
     if (!owner && (!member || member.status !== "approved")) {
       waitingRoom(auth, A, store, FS, me, member);
       return null;                                  /* page stays read-only */
