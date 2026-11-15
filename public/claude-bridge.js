@@ -28,14 +28,15 @@
   /* ------------------------------------------------------------------ CONFIG */
   var CONFIG = {
     /* Firebase console -> Project settings -> Your apps -> Web app -> Config */
-    firebase: {
-      apiKey:            "PASTE_API_KEY",
-      authDomain:        "PASTE_PROJECT.firebaseapp.com",
-      projectId:         "PASTE_PROJECT_ID",
-      storageBucket:     "PASTE_PROJECT.firebasestorage.app",
-      messagingSenderId: "PASTE_SENDER_ID",
-      appId:             "PASTE_APP_ID"
-    },
+    firebase : {
+    apiKey: "AIzaSyDQT0Jv4F1i7ls2Ux7ia_HYB31giptVm0Y",
+    authDomain: "eagle-strength-60.firebaseapp.com",
+    projectId: "eagle-strength-60",
+    storageBucket: "eagle-strength-60.firebasestorage.app",
+    messagingSenderId: "174482536731",
+    appId: "1:174482536731:web:d1773de2e149115345fbbe",
+    measurementId: "G-HECX49K697"
+  },
     /* Who may approve athletes and assign levels: the coach's Google account,
        and anyone else you trust to run the challenge. Must match the owners()
        list in firestore.rules exactly. */
