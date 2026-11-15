@@ -28,14 +28,15 @@
   /* ------------------------------------------------------------------ CONFIG */
   var CONFIG = {
     /* Firebase console -> Project settings -> Your apps -> Web app -> Config */
-    firebase: {
-      apiKey:            "PASTE_API_KEY",
-      authDomain:        "PASTE_PROJECT.firebaseapp.com",
-      projectId:         "PASTE_PROJECT_ID",
-      storageBucket:     "PASTE_PROJECT.firebasestorage.app",
-      messagingSenderId: "PASTE_SENDER_ID",
-      appId:             "PASTE_APP_ID"
-    },
+    firebase : {
+    apiKey: "AIzaSyDQT0Jv4F1i7ls2Ux7ia_HYB31giptVm0Y",
+    authDomain: "eagle-strength-60.firebaseapp.com",
+    projectId: "eagle-strength-60",
+    storageBucket: "eagle-strength-60.firebasestorage.app",
+    messagingSenderId: "174482536731",
+    appId: "1:174482536731:web:d1773de2e149115345fbbe",
+    measurementId: "G-HECX49K697"
+  },
     /* Who may approve athletes and assign levels: the coach's Google account,
        and anyone else you trust to run the challenge. Must match the owners()
        list in firestore.rules exactly. */
@@ -141,6 +142,16 @@
 
     var member = await ensureMember(store, FS, me); /* access request */
     var owner = isOwnerEmail(me.email);
+
+    /* An owner whose record was filed before they were listed in ownerEmails
+       is still marked pending. Put that right rather than making them approve
+       themselves. The rules let an owner update any member record.           */
+    if (owner && member && member.status !== "approved") {
+      try {
+        await store.updateDoc(store.doc(FS, "members/" + me.uid), { status: "approved" });
+        member.status = "approved";
+      } catch (e) { console.warn("[claude-bridge] could not self-approve", e); }
+    }
 
     if (!owner && (!member || member.status !== "approved")) {
       waitingRoom(auth, A, store, FS, me, member);
