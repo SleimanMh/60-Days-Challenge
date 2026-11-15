@@ -1,0 +1,78 @@
+rules_version = '2';
+
+/* 60 Days Challenge — access model
+   ---------------------------------
+   members/{uid}   the join request + its status (pending | approved | denied)
+   names/{uid}     display name only, so the board can label other athletes
+   progress/{uid}  one athlete's ticked days; they alone may write it
+   progress/_levels  Beginner/Advanced assignments; the owner alone may write it
+
+   Change OWNERS below to the email(s) that may approve athletes and assign
+   levels. It must match CONFIG.ownerEmails in public/claude-bridge.js.        */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function owners() {
+      return ['you@example.com'];
+    }
+
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner() {
+      return signedIn() && request.auth.token.email in owners();
+    }
+
+    function approved() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/members/$(request.auth.uid))
+        && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.status == 'approved';
+    }
+
+    /* --- join requests ------------------------------------------------- */
+    match /members/{uid} {
+      allow read: if isOwner() || (signedIn() && request.auth.uid == uid);
+
+      /* A newcomer may create exactly one request, for themselves, pending.
+         The owner's own record is allowed through already-approved.           */
+      allow create: if isOwner() || (signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'email', 'status', 'requestedAt'])
+        && request.resource.data.status == 'pending'
+        && request.resource.data.email == request.auth.token.email);
+
+      /* Only the owner decides. Nobody may approve themselves. */
+      allow update, delete: if isOwner();
+    }
+
+    /* --- display names -------------------------------------------------- */
+    match /names/{uid} {
+      allow read: if isOwner() || approved();
+      allow write: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 60;
+    }
+
+    /* --- progress ------------------------------------------------------- */
+    match /progress/{docId} {
+      allow read: if isOwner() || approved();
+
+      /* An approved athlete writes only their own day-ticks. */
+      allow write: if approved()
+        && request.auth.uid == docId
+        && request.resource.data.keys().hasOnly(['done', 'start', 'updated']);
+
+      /* The owner also writes progress/_levels (the plan assignments). */
+      allow write: if isOwner();
+    }
+
+    /* Nothing else is reachable. */
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

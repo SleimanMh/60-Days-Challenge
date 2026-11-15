@@ -1,0 +1,50 @@
+name: Deploy
+
+# Pushes to main publish the page and the Firestore security rules.
+# Required repository settings (Settings -> Secrets and variables -> Actions):
+#   Secret   FIREBASE_SERVICE_ACCOUNT  - the whole service-account JSON file
+#   Variable FIREBASE_PROJECT_ID       - e.g. eagle-strength-60
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail early if the Firebase config was never filled in
+        run: |
+          if grep -q "PASTE_API_KEY" public/claude-bridge.js; then
+            echo "::error file=public/claude-bridge.js::CONFIG.firebase is still a placeholder - see DEPLOY.md step 4"
+            exit 1
+          fi
+          if grep -q "you@example.com" public/claude-bridge.js firestore.rules; then
+            echo "::error::Owner email is still you@example.com - see DEPLOY.md step 4"
+            exit 1
+          fi
+
+      - name: Write service-account credentials
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/sa.json" >> "$GITHUB_ENV"
+
+      - name: Deploy hosting + Firestore rules
+        env:
+          PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+        run: |
+          npx -y firebase-tools@13 deploy \
+            --only hosting,firestore:rules \
+            --project "$PROJECT_ID" \
+            --non-interactive
+
+      - name: Clean up credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/sa.json"

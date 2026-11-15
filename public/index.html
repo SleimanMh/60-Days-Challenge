@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>60 Days Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,800&family=Barlow:wght@400;500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: poster-world dark page. Hero (poster + today's mission) → partner board → 60-day grid in two phases. */
+:root{
+  --ink:#0b0b0c;        /* page */
+  --panel:#151517;      /* cards */
+  --panel-2:#1d1d20;    /* raised */
+  --line:#2b2b2f;
+  --bone:#f2efe7;       /* text */
+  --muted:#9b978d;
+  --gold:#f6b912;       /* accent, run */
+  --red:#e3261c;        /* today, emphasis */
+  --hike:#86b36f;       /* hiking */
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Barlow","Helvetica Neue",Arial,sans-serif;
+  --brush:"Permanent Marker","Barlow Condensed",cursive;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--bone);font-family:var(--body);font-size:16px;line-height:1.45}
+body{background:
+  radial-gradient(900px 500px at 85% -10%, rgba(246,185,18,.13), transparent 60%),
+  radial-gradient(700px 400px at -10% 10%, rgba(227,38,28,.07), transparent 60%),
+  var(--ink)}
+img{max-width:100%;display:block}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:64px;height:auto}
+.brand b{white-space:nowrap;font-family:var(--display);font-weight:800;letter-spacing:.14em;font-size:18px;text-transform:uppercase}
+.brand span{display:block;font-size:12px;letter-spacing:.32em;color:var(--muted);text-transform:uppercase}
+.status{font-size:13px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.status.ok{color:var(--hike);border-color:rgba(134,179,111,.4)}
+.status.warn{color:var(--gold);border-color:rgba(246,185,18,.45)}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(260px,400px) 1fr;gap:36px;padding:36px 0 28px;align-items:center}
+.poster{border-radius:14px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 60px -30px rgba(246,185,18,.35)}
+.poster img{width:100%;height:auto;aspect-ratio:1/1;object-fit:cover}
+.eyebrow{font-family:var(--display);font-weight:700;letter-spacing:.3em;text-transform:uppercase;font-size:13px;color:var(--muted);display:flex;gap:10px;align-items:center}
+.eyebrow::before{content:"";width:3px;height:16px;background:var(--gold)}
+h1{margin:10px 0 6px;line-height:.9;text-wrap:balance}
+h1 .sixty{font-family:var(--brush);color:var(--gold);font-size:clamp(56px,8vw,96px);font-weight:400}
+h1 .days{font-family:var(--brush);color:var(--bone);font-size:clamp(56px,8vw,96px);font-weight:400;margin-left:.15em}
+h1 .chal{display:inline-block;margin-top:8px;font-family:var(--display);font-style:italic;font-weight:800;text-transform:uppercase;letter-spacing:.02em;font-size:clamp(30px,4.2vw,48px);color:var(--ink);background:var(--gold);padding:2px 22px 0 14px;transform:skew(-8deg);clip-path:polygon(1% 8%,100% 0,98% 92%,0 100%)}
+.tag{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:20px;margin:18px 0 22px;color:var(--bone)}
+.tag em{font-style:normal;color:var(--red)}
+
+.mission{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:16px;max-width:560px}
+.m-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.m-label{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.2em;font-size:13px;color:var(--muted)}
+.m-day{font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--red)}
+.m-task{font-family:var(--display);font-weight:800;text-transform:uppercase;font-size:clamp(30px,4vw,42px);line-height:1;letter-spacing:.01em}
+.m-task small{display:block;font-family:var(--body);text-transform:none;font-weight:500;font-size:15px;color:var(--muted);margin-top:8px;letter-spacing:0}
+.m-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.btn{border:0;cursor:pointer;border-radius:10px;padding:13px 20px;font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:.1em;text-transform:uppercase;background:var(--gold);color:var(--ink);transition:transform .12s ease,filter .12s ease}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{transform:translateY(1px)}
+.btn.done{background:transparent;color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.start{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--muted)}
+.start input{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color-scheme:dark}
+
+/* section heads */
+.sec{padding:28px 0 8px}
+.sec-h{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+h2{font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:28px;margin:0;line-height:1}
+.sec-h p{margin:0;color:var(--muted);font-size:14px}
+
+/* partner board */
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.pcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:14px}
+.pcard.me{border-color:rgba(246,185,18,.55)}
+.p-head{display:flex;align-items:center;gap:12px}
+.av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:18px;background:var(--panel-2);border:2px solid var(--gold);color:var(--gold);flex:none}
+.pcard:not(.me) .av{border-color:var(--bone);color:var(--bone)}
+.p-name{font-weight:700;font-size:17px;overflow-wrap:anywhere}
+.p-name small{display:block;color:var(--muted);font-weight:500;font-size:13px}
+.p-count{margin-left:auto;font-family:var(--display);font-weight:800;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.p-count span{font-size:16px;color:var(--muted)}
+.bar{height:10px;border-radius:99px;background:var(--panel-2);overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#ffd34d);border-radius:99px}
+.pcard:not(.me) .bar i{background:linear-gradient(90deg,#cfcabd,var(--bone))}
+.p-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.p-stats div{background:var(--panel-2);border-radius:10px;padding:8px 10px}
+.p-stats b{display:block;font-family:var(--display);font-weight:800;font-size:22px;font-variant-numeric:tabular-nums;line-height:1.1}
+.p-stats span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.invite{border-style:dashed;align-content:center}
+.invite h3{margin:0;font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:20px}
+.invite p{margin:0;color:var(--muted);font-size:14px}
+.invite ol{margin:0;padding-left:20px;font-size:14px;display:grid;gap:4px}
+
+/* rules strip */
+.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.rule{border-left:3px solid var(--gold);background:var(--panel);border-radius:0 12px 12px 0;padding:12px 14px}
+.rule.push{border-color:var(--bone)}
+.rule.hike{border-color:var(--hike)}
+.rule b{font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:15px}
+.rule p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.rule p strong{color:var(--bone);font-weight:600}
+
+/* grid */
+.phase{margin:22px 0 10px;display:flex;align-items:center;gap:12px;font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.2em;font-size:14px;color:var(--muted)}
+.phase::after{content:"";flex:1;height:1px;background:var(--line)}
+.phase em{font-style:normal;color:var(--gold)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tile{position:relative;text-align:left;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 12px 10px;display:grid;gap:6px;min-height:138px;transition:border-color .15s ease,background .15s ease,transform .12s ease}
+.tile:hover{border-color:#4a4a50}
+.tile:active{transform:scale(.985)}
+.tile[disabled]{cursor:default}
+.tile::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:3px;border-radius:0 3px 3px 0;background:var(--gold)}
+.tile.push::before{background:var(--bone)}
+.tile.hike::before{background:var(--hike)}
+.t-top{display:flex;justify-content:space-between;align-items:center}
+.t-day{white-space:nowrap;font-family:var(--display);font-weight:800;font-size:15px;letter-spacing:.1em;color:var(--muted);font-variant-numeric:tabular-nums}
+.t-chip{white-space:nowrap;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;background:rgba(246,185,18,.14);color:var(--gold)}
+.push .t-chip{background:rgba(242,239,231,.1);color:var(--bone)}
+.hike .t-chip{background:rgba(134,179,111,.15);color:var(--hike)}
+.t-target{font-family:var(--display);font-weight:800;font-size:28px;line-height:1;text-transform:uppercase;font-variant-numeric:tabular-nums}
+.t-target small{font-size:15px;color:var(--muted);margin-left:3px}
+.t-sub{font-size:12.5px;color:var(--muted);line-height:1.3}
+.t-foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;min-height:22px;gap:6px}
+.t-date{font-size:12px;color:var(--muted)}
+.dots{display:flex;gap:4px}
+.dot{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;background:var(--bone);color:var(--ink)}
+.t-check{position:absolute;right:10px;bottom:10px;width:26px;height:26px;border-radius:50%;display:none;place-items:center;background:var(--gold);color:var(--ink)}
+.tile.is-done{background:linear-gradient(160deg,rgba(246,185,18,.16),rgba(246,185,18,.04) 60%),var(--panel);border-color:rgba(246,185,18,.55)}
+.tile.is-done .t-check{display:grid}
+.tile.is-done .t-foot{padding-right:32px}
+.tile.is-today{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}
+.tile.is-today .t-day{color:var(--red)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;background:var(--gold)}
+
+.note{margin:16px 0 0;padding:12px 14px;border-radius:10px;background:rgba(246,185,18,.08);border:1px solid rgba(246,185,18,.3);font-size:14px;color:var(--bone)}
+.note[hidden]{display:none}
+footer{padding:40px 0 48px;text-align:center;font-family:var(--display);font-weight:700;letter-spacing:.4em;color:var(--muted);text-transform:uppercase;font-size:14px}
+footer::before,footer::after{content:"—";margin:0 12px;color:var(--gold)}
+
+/* Eagles set */
+.set{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px;counter-reset:s}
+.set li{display:inline-flex;align-items:center;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:5px 9px 5px 5px;font-size:13px;font-weight:600}
+.set b{display:grid;place-items:center;min-width:22px;height:22px;border-radius:5px;background:var(--red);color:#fff;font-family:var(--display);font-weight:800;font-size:13px}
+/* levels, tabs, admin */
+.lvl{display:inline-block;font-family:var(--display);font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;padding:2px 8px;border-radius:4px;vertical-align:middle}
+.lvl.adv{background:var(--red);color:#fff}
+.lvl.beg{background:var(--bone);color:var(--ink)}
+.lvl.none{background:transparent;color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+.group-h{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin-top:6px;font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.16em;font-size:14px;color:var(--muted)}
+.group-h::after{content:"";flex:1;height:1px;background:var(--line)}
+.tabs{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px;gap:4px}
+.tabs button{border:0;background:transparent;cursor:pointer;border-radius:7px;padding:8px 14px;font-family:var(--display);font-weight:800;letter-spacing:.1em;text-transform:uppercase;font-size:14px;color:var(--muted)}
+.tabs button[aria-pressed="true"]{background:var(--gold);color:var(--ink)}
+.tabs button.adv[aria-pressed="true"]{background:var(--red);color:#fff}
+.admin{background:var(--panel);border:1px solid rgba(227,38,28,.45);border-radius:14px;padding:18px;display:grid;gap:12px}
+.admin h3{margin:0;font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:20px;display:flex;gap:10px;align-items:center}
+.admin p{margin:0;color:var(--muted);font-size:14px}
+.arow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line)}
+.arow .who{display:flex;align-items:center;gap:10px;font-weight:600;min-width:0;overflow-wrap:anywhere}
+.arow .who small{display:block;color:var(--muted);font-weight:500;font-size:12.5px}
+
+@media (max-width:820px){
+  .hero{grid-template-columns:1fr;gap:22px;padding-top:22px}
+  .poster img{aspect-ratio:16/10;object-position:50% 22%}
+  .rules{grid-template-columns:1fr}
+}
+@media (max-width:440px){
+  .wrap{padding:0 16px}
+  .brand img{width:52px}
+  .brand b{font-size:16px;letter-spacing:.08em}
+  .brand span{letter-spacing:.2em}
+  .grid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .tile{min-height:132px;padding:11px 10px 9px}
+  .t-target{font-size:24px}
+  .p-stats{grid-template-columns:repeat(2,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <img src="eagle.png" alt="Eagle Strength logo" width="264" height="125">
+      <div><b>Eagle Strength</b><span>No excuses</span></div>
+    </div>
+    <div class="status" id="status">Connecting…</div>
+  </header>
+
+  <section class="hero">
+    <div class="poster"><img src="poster.jpg" alt="60 Days Challenge poster: athlete at a pull-up bar at sunrise under an eagle" width="1000" height="1000"></div>
+    <div>
+      <div class="eyebrow">Train harder · Go further · Be stronger</div>
+      <h1><span class="sixty">60</span><span class="days">Days</span><br><span class="chal">Challenge</span></h1>
+      <p class="tag">Your comfort zone will <em>kill</em> you.</p>
+      <div class="mission" id="mission"></div>
+    </div>
+  </section>
+
+  <p class="note" id="note" hidden></p>
+
+  <section class="sec" id="admin-sec" hidden>
+    <div class="admin" id="admin"></div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-h">
+      <h2>The squad</h2>
+      <p>Everyone in this challenge, live</p>
+    </div>
+    <div class="board" id="board"></div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-h">
+      <h2>60-day plan</h2>
+      <div class="tabs" role="group" aria-label="Plan level">
+        <button type="button" id="tab-adv" class="adv">Advanced</button>
+        <button type="button" id="tab-beg" class="beg">Beginner</button>
+      </div>
+    </div>
+    <div class="rules" id="rules"></div>
+    <div class="sec-h" style="margin:18px 0 0">
+      <p id="plan-hint">Tap a day to mark it done. Your partner's check-ins show as initials.</p>
+      <div class="legend">
+        <span><i></i>Run</span>
+        <span><i style="background:var(--bone)"></i>Push + Core</span>
+        <span><i style="background:var(--hike)"></i>Hiking</span>
+        <span><i style="background:var(--red)"></i>Today</span>
+      </div>
+    </div>
+    <div id="phases"></div>
+  </section>
+
+  <footer>No excuses</footer>
+</div>
+
+<!-- Self-hosting bridge: no-op on claude.ai, maps window.claude -> Firebase elsewhere. -->
+<script src="claude-bridge.js"></script>
+
+<script>
+(function(){
+"use strict";
+/* ---------- the plans ---------- */
+var PATTERN = "RPRHRPPRPRPRHPRPRHRPPRPRPRHPRP"; // days 1–30, repeated for 31–60
+var BEG_PUSHUPS = 40;
+var MIL_SET = ["Normal","Clap","Diamond","Wide","Archer left","Archer right","Normal","Sphinx","Russian","Pike"]; // 10 × 5 = 50
+var PLAN = [];
+(function(){
+  var km = 30, s = 0;
+  for (var d = 1; d <= 60; d++){
+    var t = PATTERN[(d-1) % 30];
+    if (t === "R"){ PLAN.push({day:d,type:"run",km:km/10}); km++; }
+    else if (t === "P"){ PLAN.push({day:d,type:"push",s:s,
+      adv:{push:50,df:20+s},
+      beg:{push:BEG_PUSHUPS,plank:60+5*s,hollow:30+2*s,superman:30+2*s}}); s++; }
+    else PLAN.push({day:d,type:"hike"});
+  }
+})();
+var LAST = PLAN.filter(function(p){return p.type==="push";}).slice(-1)[0];
+function totals(level){
+  var a = {km:0,rn:0,ps:0,hk:0,pu:0,df:0,plank:0};
+  PLAN.forEach(function(p){
+    if (p.type==="run"){ a.km+=p.km; a.rn++; }
+    else if (p.type==="push"){ a.ps++; var x=p[level]; a.pu+=x.push; if(level==="adv") a.df+=x.df; else a.plank+=x.plank; }
+    else a.hk++;
+  });
+  a.km = Math.round(a.km*10)/10; return a;
+}
+function secs(n){ return n < 60 ? n+"s" : Math.floor(n/60)+":"+String(n%60).padStart(2,"0"); }
+
+/* ---------- state ---------- */
+var S = { uid:null, me:{done:{},start:""}, people:{}, names:{}, levels:{}, mode:"loading", owner:false, view:null };
+var DB = null, dbRef = null, userApi = null;
+
+function clean(data){
+  var out = {done:{},start:""};
+  if (data && typeof data.done === "object" && data.done){
+    for (var k in data.done){ var n = +k; if (n>=1 && n<=60 && data.done[k] === true) out.done[n] = true; }
+  }
+  if (data && typeof data.start === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data.start)) out.start = data.start;
+  return out;
+}
+function levelOf(uid){ var l = S.levels[uid === "_me" ? S.uid : uid]; return l === "adv" || l === "beg" ? l : null; }
+function lvl(uid){ return levelOf(uid) || "beg"; }
+function viewLevel(){ return S.view || lvl(S.uid || "_me"); }
+function stats(p, level){
+  var r = {n:0,km:0,pu:0,df:0,plank:0,hk:0,next:null};
+  PLAN.forEach(function(d){
+    if (p.done[d.day]){
+      r.n++;
+      if (d.type==="run") r.km+=d.km;
+      else if (d.type==="push"){ var x=d[level]; r.pu+=x.push; if(level==="adv") r.df+=x.df; else r.plank+=x.plank; }
+      else r.hk++;
+    } else if (r.next === null) r.next = d.day;
+  });
+  r.km = Math.round(r.km*10)/10;
+  return r;
+}
+function parseDate(s){ var a = s.split("-"); return new Date(+a[0], +a[1]-1, +a[2]); }
+function todayIndex(start){
+  if (!start) return null;
+  var t = new Date(); t.setHours(0,0,0,0);
+  return Math.round((t - parseDate(start)) / 86400000) + 1;
+}
+function dateFor(start, day){
+  if (!start) return "";
+  var d = parseDate(start); d.setDate(d.getDate() + day - 1);
+  return d.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"});
+}
+function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function isMe(uid){ return uid === "_me" || (S.uid && uid === S.uid); }
+function nameOf(uid){ if (isMe(uid)) return S.names[S.uid] ? S.names[S.uid]+" (you)" : "You"; return S.names[uid] || "Athlete"; }
+function initial(uid){ var n = S.names[isMe(uid) ? S.uid : uid] || (isMe(uid) ? "Me" : "A"); return n.trim().charAt(0).toUpperCase() || "?"; }
+function fmt(n){ return n.toLocaleString(undefined,{maximumFractionDigits:1}); }
+function badge(uid){
+  var l = levelOf(uid);
+  return el("span","lvl "+(l||"none"), l==="adv" ? "Advanced" : l==="beg" ? "Beginner" : "Not assigned");
+}
+function milSet(){
+  var ol = el("ol","set"); ol.setAttribute("aria-label","Eagles pushup set");
+  MIL_SET.forEach(function(n){ var li = el("li"); li.appendChild(el("b",null,"5")); li.appendChild(document.createTextNode(n)); ol.appendChild(li); });
+  return ol;
+}
+function describe(p, level){
+  if (p.type==="run") return {big:p.km.toFixed(1)+" km run", sub: p.day===1 ? "Opening run. Set the pace." : "+100 m on your last run"};
+  if (p.type==="push"){
+    var x = p[level];
+    if (level==="adv") return {big:"50 Eagles pushups + "+x.df+" dragon flags", sub:"Eagles set: 5 reps of each variation, in order. Then dragon flags, one more than last session.", set:true};
+    return {big:x.push+" pushups + core", sub:x.push+" normal pushups, then core: Plank "+secs(x.plank)+" · Hollow body "+secs(x.hollow)+" · Superman "+secs(x.superman)+"."};
+  }
+  return {big:"Hiking day", sub:"Get outside and move. Active recovery for the legs and lungs."};
+}
+
+/* ---------- render ---------- */
+function renderStatus(){
+  var s = document.getElementById("status"), note = document.getElementById("note");
+  var map = { loading:["Connecting…",""], live:["Live","ok"], local:["Not saving","warn"], readonly:["View only","warn"], error:["Not saved","warn"] };
+  var m = map[S.mode] || map.loading;
+  s.textContent = m[0]; s.className = "status " + m[1];
+  var msg = "";
+  if (S.mode==="local") msg = "Progress isn't being saved. Reload the page and sign in again; if it keeps happening, tell Raji.";
+  else if (S.mode==="readonly") msg = "You can see the squad but can't tick days yet. Ask Raji to approve you.";
+  else if (S.mode==="error") msg = "Your last change didn't save. Check your connection and try again.";
+  else if (S.slow) msg = "Still reaching the server. The squad's progress may be out of date.";
+  else if (S.mode==="live" && !S.owner && !levelOf(S.uid)) msg = "Raji hasn't assigned your level yet, so you're on the Beginner plan for now.";
+  note.textContent = msg; note.hidden = !msg;
+}
+
+function renderMission(){
+  var box = document.getElementById("mission"); box.textContent = "";
+  var level = lvl(S.uid || "_me");
+  var st = stats(S.me, level), ti = todayIndex(S.me.start), day;
+  if (ti !== null && ti >= 1 && ti <= 60) day = ti; else day = st.next;
+  var head = el("div","m-head");
+  var lab = el("span","m-label", (ti!==null && ti>=1 && ti<=60 ? "Today's mission" : "Next mission")+" ");
+  lab.appendChild(badge(S.uid || "_me"));
+  head.appendChild(lab);
+  if (day) head.appendChild(el("span","m-day","Day "+day+" of 60"));
+  box.appendChild(head);
+  if (!day){
+    var t = el("div","m-task","All 60 days done"); t.appendChild(el("small",null,"Comfort zone: destroyed."));
+    box.appendChild(t);
+  } else {
+    var p = PLAN[day-1], d = describe(p, level);
+    var task = el("div","m-task",d.big); task.appendChild(el("small",null,d.sub)); box.appendChild(task);
+    if (d.set) box.appendChild(milSet());
+    var row = el("div","m-row");
+    var done = !!S.me.done[day];
+    var b = el("button","btn"+(done?" done":""), done ? "Day "+day+" done ✓" : "Mark day "+day+" done");
+    b.type = "button";
+    if (S.mode==="readonly") b.disabled = true;
+    b.addEventListener("click", function(){ toggle(day); });
+    row.appendChild(b);
+    box.appendChild(row);
+  }
+  var l2 = el("label","start"); l2.htmlFor = "start-date";
+  l2.appendChild(el("span",null,"Your start date"));
+  var inp = el("input"); inp.type = "date"; inp.id = "start-date"; inp.value = S.me.start || "";
+  if (S.mode==="readonly") inp.disabled = true;
+  inp.addEventListener("change", function(){ S.me.start = /^\d{4}-\d{2}-\d{2}$/.test(inp.value) ? inp.value : ""; save(); render(); });
+  l2.appendChild(inp);
+  box.appendChild(l2);
+}
+
+function personCard(uid, p){
+  var level = lvl(uid), st = stats(p, level), me = isMe(uid), T = totals(level);
+  var c = el("article","pcard"+(me?" me":""));
+  var h = el("div","p-head");
+  h.appendChild(el("div","av",initial(uid)));
+  var nm = el("div","p-name",nameOf(uid)+" ");
+  nm.appendChild(badge(uid));
+  nm.appendChild(el("small",null, p.start ? "Started "+dateFor(p.start,1) : (st.next ? "Next up: Day "+st.next : "Finished")));
+  h.appendChild(nm);
+  var cnt = el("div","p-count",String(st.n)); cnt.appendChild(el("span",null," / 60")); h.appendChild(cnt);
+  c.appendChild(h);
+  var bar = el("div","bar"); var i = el("i"); i.style.width = (st.n/60*100).toFixed(1)+"%"; bar.appendChild(i);
+  bar.setAttribute("role","progressbar"); bar.setAttribute("aria-valuemin","0"); bar.setAttribute("aria-valuemax","60"); bar.setAttribute("aria-valuenow",String(st.n));
+  bar.setAttribute("aria-label", nameOf(uid)+" days completed");
+  c.appendChild(bar);
+  var g = el("div","p-stats");
+  var cells = level==="adv"
+    ? [[fmt(st.km),"km run"],[fmt(st.df),"dragon flags"],[fmt(st.pu),"pushups"],[st.hk+"/"+T.hk,"hikes"]]
+    : [[fmt(st.km),"km run"],[fmt(Math.round(st.plank/6)/10),"plank min"],[fmt(st.pu),"pushups"],[st.hk+"/"+T.hk,"hikes"]];
+  cells.forEach(function(x){ var d = el("div"); d.appendChild(el("b",null,x[0])); d.appendChild(el("span",null,x[1])); g.appendChild(d); });
+  c.appendChild(g);
+  return c;
+}
+
+function renderBoard(){
+  var b = document.getElementById("board"); b.textContent = "";
+  var meId = S.uid || "_me";
+  var all = [[meId, S.me]].concat(Object.keys(S.people).filter(function(id){ return id !== S.uid; }).map(function(id){ return [id, S.people[id]]; }));
+  [["adv","Advanced"],["beg","Beginner"]].forEach(function(g){
+    var list = all.filter(function(x){ return lvl(x[0]) === g[0]; });
+    if (!list.length) return;
+    list.sort(function(a,c){ var d = stats(c[1],g[0]).n - stats(a[1],g[0]).n; return d !== 0 ? d : (isMe(a[0]) ? -1 : 1); });
+    b.appendChild(el("div","group-h",g[1]+" · "+list.length));
+    list.forEach(function(x){ b.appendChild(personCard(x[0], x[1])); });
+  });
+  if (all.length === 1){
+    var c = el("article","pcard invite");
+    c.appendChild(el("h3",null,"Bring your athletes in"));
+    c.appendChild(el("p",null,"Each athlete shows up here once you approve their request."));
+    var ol = el("ol");
+    ["Send them the link to this page.","They sign in and ask to join.","Approve them above, then assign their level."].forEach(function(t){ ol.appendChild(el("li",null,t)); });
+    c.appendChild(ol);
+    b.appendChild(c);
+  }
+}
+
+function renderAdmin(){
+  var sec = document.getElementById("admin-sec"), box = document.getElementById("admin");
+  sec.hidden = !S.owner; if (!S.owner) return;
+  box.textContent = "";
+  var h = el("h3",null,"Admin · Assign levels"); h.appendChild(el("span","lvl adv","Raji only"));
+  box.appendChild(h);
+  box.appendChild(el("p",null,"Pick a level for each athlete. They switch plans as soon as you tap. New athletes start on Beginner until you assign them."));
+  var ids = [S.uid].concat(Object.keys(S.people).filter(function(id){ return id !== S.uid; }));
+  ids.forEach(function(id){
+    if (!id) return;
+    var row = el("div","arow");
+    var who = el("div","who"); who.appendChild(el("div","av",initial(id)));
+    var nm = el("div",null,nameOf(id)); nm.appendChild(el("small",null, stats(S.people[id]||S.me, lvl(id)).n+" / 60 days")); who.appendChild(nm);
+    row.appendChild(who);
+    var tabs = el("div","tabs"); tabs.setAttribute("role","group"); tabs.setAttribute("aria-label","Level for "+nameOf(id));
+    [["beg","Beginner"],["adv","Advanced"]].forEach(function(o){
+      var bt = el("button",o[0],o[1]); bt.type = "button";
+      bt.setAttribute("aria-pressed", levelOf(id) === o[0] ? "true" : "false");
+      bt.addEventListener("click", function(){ assign(id, o[0]); });
+      tabs.appendChild(bt);
+    });
+    row.appendChild(tabs);
+    box.appendChild(row);
+  });
+}
+
+function renderRules(level){
+  var r = document.getElementById("rules"); r.textContent = "";
+  var T = totals(level), L = LAST[level];
+  var push = level==="adv"
+    ? ["Push + Core · "+T.ps+" days","<strong>50 Eagles pushups</strong>: 5 each of normal, clap, diamond, wide, archer L/R, normal, sphinx, russian, pike. Then dragon flags from <strong>20</strong>, add <strong>1</strong> each session, finish at <strong>"+L.df+"</strong>."]
+    : ["Push + Core · "+T.ps+" days","<strong>"+BEG_PUSHUPS+" normal pushups</strong> + core. Plank from <strong>1:00</strong> (+5 s a session), hollow body and superman from <strong>30 s</strong> (+2 s). Finish at <strong>"+secs(L.plank)+"</strong> and <strong>"+secs(L.hollow)+"</strong>."];
+  var fin = level==="adv"
+    ? "Finish line: <strong>"+fmt(T.df)+" dragon flags</strong>, <strong>"+fmt(T.pu)+" pushups</strong>."
+    : "Finish line: <strong>"+fmt(Math.round(T.plank/6)/10)+" min</strong> of plank, <strong>"+fmt(T.pu)+" pushups</strong>.";
+  [["run","Run · "+T.rn+" days","Start at <strong>3.0 km</strong>, add <strong>100 m</strong> every run. Finish at <strong>5.5 km</strong>. Total: <strong>"+fmt(T.km)+" km</strong>."],
+   ["push",push[0],push[1]],
+   ["hike","Hiking · "+T.hk+" days","Active recovery. Get on a trail and move. "+fin]
+  ].forEach(function(x){
+    var d = el("div","rule "+x[0]); d.appendChild(el("b",null,x[1]));
+    var p = el("p"); p.innerHTML = x[2]; d.appendChild(p); r.appendChild(d); // page-authored text only
+  });
+}
+
+function tile(p, level, mineLevel){
+  var mine = !!S.me.done[p.day], ti = todayIndex(S.me.start);
+  var t = el("button","tile "+p.type+(mine?" is-done":"")+(ti===p.day?" is-today":""));
+  t.type = "button"; t.setAttribute("aria-pressed", mine ? "true" : "false");
+  if (S.mode==="readonly") t.disabled = true;
+  var top = el("span","t-top");
+  top.appendChild(el("span","t-day","DAY "+(p.day<10?"0":"")+p.day));
+  top.appendChild(el("span","t-chip", p.type==="run"?"Run":p.type==="push"?"Push + Core":"Hiking"));
+  t.appendChild(top);
+  var tg = el("span","t-target"), sub;
+  if (p.type==="run"){ tg.textContent = p.km.toFixed(1); tg.appendChild(el("small",null,"km")); sub = p.day===1 ? "Opening run" : "+100 m"; }
+  else if (p.type==="push"){
+    var x = p[level];
+    if (level==="adv"){ tg.textContent = x.df; tg.appendChild(el("small",null,"flags")); sub = "50 Eagles pushups (10 × 5) + "+x.df+" dragon flags"; }
+    else { tg.textContent = secs(x.plank); tg.appendChild(el("small",null,"plank")); sub = x.push+" normal pushups · hollow "+secs(x.hollow)+" · superman "+secs(x.superman); }
+  }
+  else { tg.textContent = "Hike"; sub = "Active recovery"; }
+  t.appendChild(tg);
+  t.appendChild(el("span","t-sub",sub));
+  var foot = el("span","t-foot");
+  foot.appendChild(el("span","t-date",dateFor(S.me.start,p.day)));
+  var dots = el("span","dots");
+  Object.keys(S.people).forEach(function(id){
+    if (id === S.uid || !S.people[id].done[p.day]) return;
+    var d = el("span","dot",initial(id)); d.title = nameOf(id)+" did day "+p.day; dots.appendChild(d);
+  });
+  foot.appendChild(dots);
+  t.appendChild(foot);
+  var ck = el("span","t-check"); ck.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  t.appendChild(ck);
+  t.setAttribute("aria-label","Day "+p.day+": "+describe(p, level).big+(mine?", done":", not done"));
+  t.addEventListener("click", function(){ toggle(p.day); });
+  return t;
+}
+
+function renderGrid(){
+  var level = viewLevel(), mineLevel = lvl(S.uid || "_me");
+  document.getElementById("tab-adv").setAttribute("aria-pressed", level==="adv" ? "true" : "false");
+  document.getElementById("tab-beg").setAttribute("aria-pressed", level==="beg" ? "true" : "false");
+  document.getElementById("plan-hint").textContent = level === mineLevel
+    ? "Your plan. Tap a day to mark it done. Others' check-ins show as initials."
+    : "You're viewing the " + (level==="adv"?"Advanced":"Beginner") + " plan. Ticks still count for your own " + (mineLevel==="adv"?"Advanced":"Beginner") + " plan.";
+  renderRules(level);
+  var w = document.getElementById("phases"); w.textContent = "";
+  [[1,30,"Phase 1","Days 1–30 · build the base"],[31,60,"Phase 2","Days 31–60 · push past it"]].forEach(function(ph){
+    var h = el("div","phase"); h.appendChild(el("em",null,ph[2])); h.appendChild(document.createTextNode(ph[3])); w.appendChild(h);
+    var g = el("div","grid");
+    PLAN.slice(ph[0]-1, ph[1]).forEach(function(p){ g.appendChild(tile(p, level, mineLevel)); });
+    w.appendChild(g);
+  });
+}
+
+function render(){ renderStatus(); renderMission(); renderAdmin(); renderBoard(); renderGrid(); }
+
+document.getElementById("tab-adv").addEventListener("click", function(){ S.view = "adv"; renderGrid(); });
+document.getElementById("tab-beg").addEventListener("click", function(){ S.view = "beg"; renderGrid(); });
+
+/* ---------- saving ---------- */
+var writing = false, dirty = false;
+function toggle(day){
+  if (S.mode==="readonly") return;
+  if (S.me.done[day]) delete S.me.done[day]; else S.me.done[day] = true;
+  if (S.uid) S.people[S.uid] = S.me;
+  render(); save();
+}
+function save(){
+  if (!dbRef) return;
+  if (writing){ dirty = true; return; }
+  writing = true;
+  (function loop(){
+    dirty = false;
+    var body = {done:{}, start:S.me.start || "", updated:Date.now()};
+    Object.keys(S.me.done).forEach(function(k){ body.done[k] = true; });
+    dbRef.set(body).then(function(){
+      if (S.mode==="error"){ S.mode = "live"; renderStatus(); }
+      if (dirty) loop(); else writing = false;
+    }, function(e){
+      writing = false;
+      S.mode = (e && e.code === "invalid_argument") ? "readonly" : "error";
+      render();
+    });
+  })();
+}
+var assigning = false, pendingLv = null;
+var LV_ID = "_levels"; // owner-only doc: athletes can only write progress/<their own id>
+function assign(id, level){
+  if (!DB || !S.owner || levelOf(id) === level) return;
+  S.levels[id] = level; render();
+  writeLevels();
+}
+function writeLevels(){
+  if (assigning){ pendingLv = true; return; }
+  assigning = true; pendingLv = false;
+  var body = {levels:{}, updated:Date.now()};
+  Object.keys(S.levels).forEach(function(k){ if (S.levels[k]==="adv"||S.levels[k]==="beg") body.levels[k] = S.levels[k]; });
+  DB.doc("progress/" + LV_ID).set(body).then(function(){
+    assigning = false; if (pendingLv) writeLevels();
+  }, function(){ assigning = false; S.mode = "error"; render(); });
+}
+
+/* ---------- connect ---------- */
+render();
+var api = window.claude && typeof window.claude.use === "function" ? window.claude : null;
+if (!api){ S.mode = "local"; renderStatus(); return; }
+Promise.all([api.use("user"), api.use("db")]).then(function(r){
+  userApi = r[0]; var db = r[1];
+  if (!db || !userApi){ S.mode = "local"; renderStatus(); return; }
+  DB = db;
+  return userApi.id().then(function(uid){
+    if (!uid){ S.mode = "local"; renderStatus(); return; }
+    S.uid = uid;
+    dbRef = db.doc("progress/" + uid);
+    try{ Promise.resolve(userApi.isOwner()).then(function(v){ S.owner = v === true; render(); }, function(){}); }catch(_){}
+    try{ Promise.resolve(userApi.can && userApi.can("data.write")).then(function(v){ if (v === false){ S.mode = "readonly"; render(); } }, function(){}); }catch(_){}
+    var timer = setTimeout(function(){ S.slow = true; renderStatus(); }, 10000);
+    var joined = false;
+    function resolveNames(ids){
+      ids = ids.filter(function(id){ return !(id in S.names); });
+      if (!ids.length || !userApi.profiles) return;
+      ids.forEach(function(id){ S.names[id] = ""; });
+      userApi.profiles(ids).then(function(ps){
+        ids.forEach(function(id){ S.names[id] = (ps && ps[id] && ps[id].name) || ""; });
+        render();
+      }, function(){});
+    }
+    db.collection("progress").onSnapshot(function(snap){
+      if (!snap.metadata.fromCache){ clearTimeout(timer); S.slow = false; }
+      var people = {}, had = false;
+      snap.docs.forEach(function(d){
+        if (!d.exists) return;
+        if (d.id === LV_ID){
+          if (!assigning && !pendingLv){
+            var src = (d.data() || {}).levels, lv = {};
+            if (src && typeof src === "object") for (var k in src){ if (src[k]==="adv"||src[k]==="beg") lv[k] = src[k]; }
+            S.levels = lv;
+          }
+          return;
+        }
+        people[d.id] = clean(d.data()); if (d.id === uid) had = true;
+      });
+      if (had && !writing && !dirty) S.me = people[uid];
+      people[uid] = S.me;
+      S.people = people;
+      if (S.mode === "loading") S.mode = "live";
+      // first visit: add this athlete to the squad so Raji can assign a level
+      if (!snap.metadata.fromCache && !had && !joined && S.mode === "live"){ joined = true; save(); }
+      resolveNames(Object.keys(people));
+      render();
+    }, function(e){
+      clearTimeout(timer); S.slow = false;
+      S.mode = (e && e.code === "revoked") ? "readonly" : "error";
+      render();
+    });
+  });
+}, function(){ S.mode = "local"; renderStatus(); });
+})();
+</script>
+</body>
+</html>
