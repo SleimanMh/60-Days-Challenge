@@ -17,6 +17,11 @@
 (function () {
   "use strict";
 
+  /* The coach's first name, used in the page's own messages ("Ask X to
+     approve you"). Set in CONFIG below; read by index.html, which runs after
+     this file. Published before anything else can return early.             */
+  window.CHALLENGE_COACH = "Raji";
+
   /* Running on claude.ai? The host already provides everything. Stand down. */
   if (window.claude && typeof window.claude.use === "function") return;
 
@@ -31,12 +36,18 @@
       messagingSenderId: "PASTE_SENDER_ID",
       appId:             "PASTE_APP_ID"
     },
-    /* Who may approve athletes and assign levels. Must match firestore.rules. */
-    ownerEmails: ["you@example.com"],
+    /* Who may approve athletes and assign levels: the coach's Google account,
+       and anyone else you trust to run the challenge. Must match the owners()
+       list in firestore.rules exactly. */
+    ownerEmails: ["coach@example.com"],
+    /* The coach's first name, as athletes see it in the page's messages. */
+    coachName: "Raji",
     /* Shown on the sign-in gate. */
     title: "60 Days Challenge",
     blurb: "Sign in to join the challenge. Your coach approves new athletes."
   };
+
+  if (CONFIG.coachName) window.CHALLENGE_COACH = CONFIG.coachName;
 
   var SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 

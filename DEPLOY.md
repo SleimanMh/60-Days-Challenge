@@ -56,25 +56,32 @@ var CONFIG = {
     messagingSenderId: "1234567890",
     appId:             "1:1234567890:web:abc123"
   },
-  ownerEmails: ["your.google.account@gmail.com"],   // <- you, the coach
+  ownerEmails: ["coach@gmail.com"],   // <- whoever approves athletes
+  coachName: "Raji",                  // <- their first name, shown to athletes
   …
 };
 ```
+
+`ownerEmails` is **the Google account of whoever runs the challenge** — not
+necessarily you. See *[If a friend is the coach](#if-a-friend-is-the-coach)*
+below. `coachName` is only cosmetic: it's the name athletes see in
+*"Ask Raji to approve you"* and on the admin panel badge.
 
 > These values are **not secrets**. Every Firebase web app ships them in plain
 > sight; they only identify the project. What actually protects your data is
 > `firestore.rules` plus the authorised-domains list in step 6.
 
-Then put the **same owner email** in `firestore.rules`:
+Then put the **same owner email(s)** in `firestore.rules`:
 
 ```
 function owners() {
-  return ['your.google.account@gmail.com'];
+  return ['coach@gmail.com'];
 }
 ```
 
-Both places must match, or you'll be able to see the approvals panel but not
-save anything. Add more emails to both lists if you want a second coach.
+Both lists must match exactly. If an email is in `claude-bridge.js` but not in
+`firestore.rules`, that person sees the approvals panel but every approval
+fails to save — the rules are the real authority, the panel is just the button.
 
 ## 5. Deploy
 
@@ -140,6 +147,68 @@ page.
 
 ---
 
+## If a friend is the coach
+
+Deploying and running the challenge are two separate jobs, and they don't have
+to be the same person.
+
+**You, deploying.** You own the Firebase project, you paste the config, you run
+`firebase deploy`. You need a Google account for the Firebase console. Your
+email does **not** have to be in `ownerEmails`.
+
+**Your friend, coaching.** They need a Google account and nothing else — no
+Firebase console, no GitHub, no install. Put *their* Google address in the two
+lists in step 4 and their name in `coachName`. When they open the link and sign
+in, they're recognised as owner, approved automatically without asking anyone,
+and they get both panels: **Access requests** and **Admin · Assign levels**.
+
+So, concretely:
+
+```js
+ownerEmails: ["raji@gmail.com"],   // your friend
+coachName: "Raji",
+```
+
+```
+function owners() {
+  return ['raji@gmail.com'];
+}
+```
+
+**Worth listing yourself too.** Anyone in both lists gets the same powers, so:
+
+```js
+ownerEmails: ["raji@gmail.com", "sleimenmhanna@gmail.com"],
+```
+
+```
+function owners() {
+  return ['raji@gmail.com', 'sleimenmhanna@gmail.com'];
+}
+```
+
+That way you can confirm the approvals panel actually works without waiting on
+them, and nobody is locked out if your friend loses access to their account.
+There's no hierarchy — a second owner can approve, assign levels, and edit the
+lists the same as the first.
+
+**Make sure it's the right address.** It has to be the account they really sign
+in with. A Gmail address and a Google Workspace address for the same person are
+different accounts here, and an address that was never a Google account can't
+sign in at all. If they sign in and *don't* see the approvals panel, that
+mismatch is almost always why — check the email they're signed in as against
+the two lists.
+
+**Changing coach later** means editing both lists and redeploying:
+
+```bash
+firebase deploy --only hosting,firestore:rules
+```
+
+Approved athletes and their progress are untouched by that.
+
+---
+
 ## Running the challenge
 
 **Inviting people.** Send the link. Nothing else. There's no invite list to
@@ -149,13 +218,13 @@ maintain.
 been asked to add you."* They can leave the page; it lets them in by itself the
 moment you approve.
 
-**Approving.** Open the link yourself. Because your email is in `ownerEmails`,
-you get an **Access requests** panel above the squad board, with each person's
+**Approving.** The coach opens the link. Because their email is in
+`ownerEmails`, they get an **Access requests** panel above the squad board, with each person's
 name and email and **Approve** / **Deny**. Approve, and they land on the board
 on their next look.
 
-**Assigning plans.** Below that is the existing **Admin · Assign levels** panel.
-Everyone starts on Beginner; tap Advanced for whoever earns it. They switch
+**Assigning plans.** Below that is the **Admin · Assign levels** panel, same
+owners only. Everyone starts on Beginner; tap Advanced for whoever earns it. They switch
 plans immediately.
 
 **Removing someone.** Set them back to Denied in Firestore

@@ -254,6 +254,8 @@ footer::before,footer::after{content:"—";margin:0 12px;color:var(--gold)}
 <script>
 (function(){
 "use strict";
+/* Coach's name, set in claude-bridge.js (CONFIG.coachName). */
+var COACH = window.CHALLENGE_COACH || "Raji";
 /* ---------- the plans ---------- */
 var PATTERN = "RPRHRPPRPRPRHPRPRHRPPRPRPRHPRP"; // days 1–30, repeated for 31–60
 var BEG_PUSHUPS = 40;
@@ -352,11 +354,11 @@ function renderStatus(){
   var m = map[S.mode] || map.loading;
   s.textContent = m[0]; s.className = "status " + m[1];
   var msg = "";
-  if (S.mode==="local") msg = "Progress isn't being saved. Reload the page and sign in again; if it keeps happening, tell Raji.";
-  else if (S.mode==="readonly") msg = "You can see the squad but can't tick days yet. Ask Raji to approve you.";
+  if (S.mode==="local") msg = "Progress isn't being saved. Reload the page and sign in again; if it keeps happening, tell " + COACH + ".";
+  else if (S.mode==="readonly") msg = "You can see the squad but can't tick days yet. Ask " + COACH + " to approve you.";
   else if (S.mode==="error") msg = "Your last change didn't save. Check your connection and try again.";
   else if (S.slow) msg = "Still reaching the server. The squad's progress may be out of date.";
-  else if (S.mode==="live" && !S.owner && !levelOf(S.uid)) msg = "Raji hasn't assigned your level yet, so you're on the Beginner plan for now.";
+  else if (S.mode==="live" && !S.owner && !levelOf(S.uid)) msg = COACH + " hasn't assigned your level yet, so you're on the Beginner plan for now.";
   note.textContent = msg; note.hidden = !msg;
 }
 
@@ -446,7 +448,7 @@ function renderAdmin(){
   var sec = document.getElementById("admin-sec"), box = document.getElementById("admin");
   sec.hidden = !S.owner; if (!S.owner) return;
   box.textContent = "";
-  var h = el("h3",null,"Admin · Assign levels"); h.appendChild(el("span","lvl adv","Raji only"));
+  var h = el("h3",null,"Admin · Assign levels"); h.appendChild(el("span","lvl adv",COACH + " only"));
   box.appendChild(h);
   box.appendChild(el("p",null,"Pick a level for each athlete. They switch plans as soon as you tap. New athletes start on Beginner until you assign them."));
   var ids = [S.uid].concat(Object.keys(S.people).filter(function(id){ return id !== S.uid; }));
