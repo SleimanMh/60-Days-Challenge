@@ -64,12 +64,16 @@ service cloud.firestore {
     match /progress/{docId} {
       allow read: if isOwner() || approved();
 
-      /* An approved athlete writes only their own day-ticks. */
+      /* An approved athlete writes only their own day-ticks. request.resource
+         is null on a delete, so this rule covers creates and updates only -
+         an athlete cannot delete their own record.                          */
       allow write: if approved()
         && request.auth.uid == docId
+        && request.resource != null
         && request.resource.data.keys().hasOnly(['done', 'start', 'updated']);
 
-      /* The owner also writes progress/_levels (the plan assignments). */
+      /* The owner writes progress/_levels (the plan assignments), and deletes
+         an athlete's ticks when taking them off the challenge.              */
       allow write: if isOwner();
     }
 

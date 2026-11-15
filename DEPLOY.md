@@ -115,6 +115,13 @@ Hosting URL: https://eagle-strength-60.web.app
 That's your link. It also publishes `firestore.rules`, so the database is
 locked down from the first second.
 
+> ⚠️ **Use plain `firebase deploy` after changing who the owner is.**
+> `firebase deploy --only hosting` publishes the page but *not* the rules, and
+> the owner lives in both files. Deploy one without the other and the page lets
+> the coach in while the server refuses everything they do - a "View only"
+> badge and nothing saved. To publish both explicitly:
+> `firebase deploy --only hosting,firestore:rules`
+
 ## 6. Authorise the domain
 
 **Authentication → Settings → Authorised domains.** `*.web.app` and
@@ -219,25 +226,48 @@ been asked to add you."* They can leave the page; it lets them in by itself the
 moment you approve.
 
 **Approving.** The coach opens the link. Because their email is in
-`ownerEmails`, they get an **Access requests** panel above the squad board, with each person's
-name and email and **Approve** / **Deny**. Approve, and they land on the board
-on their next look.
+`ownerEmails`, they get a **Squad admin** panel above the board, with each
+person's name and email under one of three headings:
+
+| Heading | Who | Buttons |
+|---|---|---|
+| Access requests | signed in, waiting | **Approve** / **Deny** |
+| On the challenge | approved athletes | **Take off** |
+| Not on the challenge | denied or taken off | **Let back in** |
+
+Approve, and they land on the board on their next look - no reload needed if
+they're sitting on the waiting screen.
 
 **Assigning plans.** Below that is the **Admin · Assign levels** panel, same
 owners only. Everyone starts on Beginner; tap Advanced for whoever earns it. They switch
 plans immediately.
 
-**Removing someone.** Set them back to Denied in Firestore
-(`members/<their-id>`, `status: "denied"`), or delete the document. Their
-ticks stay in `progress/` until you delete that too.
+**Taking someone off.** Someone who stops training sits on the squad board at
+3 / 60 forever. **Take off** next to their name, under *On the challenge*, asks
+you to confirm and then:
+
+- sets their status to denied, so they lose access on their next visit and see
+  *"Not on this challenge"*
+- deletes their `progress/` record, so they come off everyone's board
+
+Their ticked days are cleared by that second step. It has to be: every athlete
+can read the whole `progress` collection, so there is no way to hide a record
+from the board while leaving it in the database.
+
+They move to **Not on the challenge**, where **Let back in** restores access -
+but they start again from day 1, since the ticks are gone. If someone is only
+pausing, leave them alone rather than taking them off.
+
+The coach's own row has no button; an owner who removed themselves would lock
+the panel away from everyone.
 
 ## What's stored
 
 | Collection | Holds | Who can write it |
 |---|---|---|
-| `members/{uid}` | join request: name, email, status | the person creates their own *pending*; only you change it |
+| `members/{uid}` | join request: name, email, status (pending / approved / denied) | the person creates their own *pending*; only an owner changes it |
 | `names/{uid}` | display name, for labelling the board | that person only |
-| `progress/{uid}` | their ticked days + start date | that person only |
+| `progress/{uid}` | their ticked days + start date | that person only; an owner may delete it |
 | `progress/_levels` | Beginner/Advanced per athlete | you only |
 
 Nobody can tick a day for somebody else, approve themselves, or promote

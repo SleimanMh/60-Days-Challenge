@@ -30,3 +30,7 @@ pasted into `public/claude-bridge.js`, `firebase deploy`. Free tier is plenty.
 3. They see "Access requested" and nothing else.
 4. You see them under **Access requests** and tap Approve.
 5. They're on the squad board. You assign Beginner or Advanced.
+
+If someone drops out, **Take off** in the same panel removes them from the
+board and revokes their access. **Let back in** reverses it, though they
+restart from day 1.

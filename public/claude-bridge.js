@@ -160,7 +160,7 @@
 
     closeGate();
     signOutCorner(auth, A, me);
-    if (owner) approvals(store, FS);
+    if (owner) approvals(store, FS, me);
 
     return {
       user: userApi(store, FS, me, owner),
@@ -333,55 +333,115 @@
     };
   }
 
-  /* ----------------------------------------------------- OWNER: approvals UI */
-  function approvals(store, FS) {
+  /* ----------------------------------------------------- OWNER: squad admin */
+  /* Three groups: who is waiting, who is in, and who has been taken off.
+     Only an owner ever sees this - use("db") never resolves for anyone else. */
+  function approvals(store, FS, me) {
     var host = document.createElement("section");
     host.className = "sec";
     host.innerHTML = '<div class="admin" id="cb-approvals"></div>';
     var anchor = document.getElementById("admin-sec");
     if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(host, anchor);
     else document.querySelector(".wrap").appendChild(host);
-
     var box = host.querySelector("#cb-approvals");
 
+    function fail(btn, e) {
+      btn.disabled = false;
+      alert("Couldn't save that: " + ((e && e.message) || e) + "\n\nCheck your connection and try again.");
+    }
+    function setStatus(uid, status, btn) {
+      btn.disabled = true;
+      store.updateDoc(store.doc(FS, "members/" + uid), { status: status })
+        .catch(function (e) { fail(btn, e); });
+    }
+    /* Taking someone off clears their ticks too, so they don't keep sitting on
+       the squad board. Everyone can read progress, so hiding it is not enough. */
+    function removeAthlete(uid, name, btn) {
+      if (!window.confirm(
+        "Take " + name + " off the challenge?\n\n" +
+        "They lose access and come off the squad board, and their ticked days " +
+        "are cleared.\n\nYou can let them back in later, but they would start " +
+        "again from day 1.")) return;
+      btn.disabled = true;
+      store.deleteDoc(store.doc(FS, "progress/" + uid)).catch(function () { /* may not exist */ })
+        .then(function () {
+          return store.updateDoc(store.doc(FS, "members/" + uid), { status: "denied" });
+        })
+        .catch(function (e) { fail(btn, e); });
+    }
+
+    function row(id, m, actions) {
+      var r = node("div", null, "arow");
+      var who = node("div", null, "who");
+      who.appendChild(node("div", (m.name || "?").trim().charAt(0).toUpperCase() || "?", "av"));
+      var nm = node("div", (m.name || "Athlete") + (id === me.uid ? " (you)" : ""));
+      nm.appendChild(node("small", m.email || ""));
+      who.appendChild(nm);
+      r.appendChild(who);
+      if (actions.length) {
+        var tabs = node("div", null, "tabs");
+        actions.forEach(function (a) {
+          var b = node("button", a[0], a[1]);
+          b.type = "button";
+          b.onclick = function () { a[2](b); };
+          tabs.appendChild(b);
+        });
+        r.appendChild(tabs);
+      }
+      return r;
+    }
+
     store.onSnapshot(store.collection(FS, "members"), function (snap) {
-      var pending = [];
+      var waiting = [], active = [], off = [];
       snap.forEach(function (d) {
-        var m = d.data() || {};
-        if (m.status === "pending") pending.push({ id: d.id, m: m });
+        var m = d.data() || {}, e = { id: d.id, m: m };
+        if (m.status === "pending") waiting.push(e);
+        else if (m.status === "approved") active.push(e);
+        else off.push(e);
       });
+      var byName = function (a, b) { return (a.m.name || "").localeCompare(b.m.name || ""); };
+      waiting.sort(function (a, b) { return (a.m.requestedAt || 0) - (b.m.requestedAt || 0); });
+      active.sort(byName); off.sort(byName);
 
       box.textContent = "";
-      var h = node("h3", "Access requests");
-      h.appendChild(node("span", pending.length ? String(pending.length) + " waiting" : "None waiting", "lvl " + (pending.length ? "adv" : "none")));
+      var h = node("h3", "Squad admin");
+      h.appendChild(node("span", waiting.length
+        ? String(waiting.length) + (waiting.length === 1 ? " waiting" : " waiting")
+        : "None waiting", "lvl " + (waiting.length ? "adv" : "none")));
       box.appendChild(h);
-      box.appendChild(node("p", pending.length
+      box.appendChild(node("p", waiting.length
         ? "Approve an athlete and they join the squad board immediately."
         : "Anyone who opens the link and signs in shows up here first."));
 
-      pending.forEach(function (p) {
-        var row = node("div", null, "arow");
-        var who = node("div", null, "who");
-        who.appendChild(node("div", (p.m.name || "?").charAt(0).toUpperCase(), "av"));
-        var nm = node("div", p.m.name || "Athlete");
-        nm.appendChild(node("small", p.m.email || ""));
-        who.appendChild(nm);
-        row.appendChild(who);
-
-        var tabs = node("div", null, "tabs");
-        ["approved", "denied"].forEach(function (status) {
-          var b = node("button", status === "approved" ? "Approve" : "Deny", status === "approved" ? "beg" : "adv");
-          b.type = "button";
-          b.onclick = function () {
-            b.disabled = true;
-            store.updateDoc(store.doc(FS, "members/" + p.id), { status: status })
-              .catch(function (e) { b.disabled = false; alert("Couldn't save: " + ((e && e.message) || e)); });
-          };
-          tabs.appendChild(b);
+      if (waiting.length) {
+        box.appendChild(node("div", "Access requests \u00b7 " + waiting.length, "group-h"));
+        waiting.forEach(function (e) {
+          box.appendChild(row(e.id, e.m, [
+            ["Approve", "beg", function (b) { setStatus(e.id, "approved", b); }],
+            ["Deny", "adv", function (b) { setStatus(e.id, "denied", b); }]
+          ]));
         });
-        row.appendChild(tabs);
-        box.appendChild(row);
-      });
+      }
+
+      if (active.length) {
+        box.appendChild(node("div", "On the challenge \u00b7 " + active.length, "group-h"));
+        active.forEach(function (e) {
+          /* No button on your own row: an owner removing themselves would lock
+             the panel away from them.                                        */
+          box.appendChild(row(e.id, e.m, e.id === me.uid ? [] : [
+            ["Take off", "adv", function (b) { removeAthlete(e.id, e.m.name || "this athlete", b); }]
+          ]));
+        });
+      }
+
+      if (off.length) {
+        box.appendChild(node("div", "Not on the challenge \u00b7 " + off.length, "group-h"));
+        off.forEach(function (e) {
+          box.appendChild(row(e.id, e.m, [
+            ["Let back in", "beg", function (b) { setStatus(e.id, "approved", b); }]
+          ]));
+        });
+      }
     }, function (e) { console.warn("[claude-bridge] members listen failed", e); });
   }
 
