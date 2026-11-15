@@ -7,14 +7,15 @@ rules_version = '2';
    progress/{uid}  one athlete's ticked days; they alone may write it
    progress/_levels  Beginner/Advanced assignments; the owner alone may write it
 
-   Change OWNERS below to the email(s) that may approve athletes and assign
-   levels. It must match CONFIG.ownerEmails in public/claude-bridge.js.        */
+   Change owners() below to the email(s) that may approve athletes and assign
+   levels, in lowercase. It must match CONFIG.ownerEmails in
+   public/claude-bridge.js.                                                    */
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     function owners() {
-      return ['coach@example.com'];
+      return ['rtrader2002@gmail.com'];
     }
 
     function signedIn() {
@@ -22,7 +23,9 @@ service cloud.firestore {
     }
 
     function isOwner() {
-      return signedIn() && request.auth.token.email in owners();
+      /* Google hands us the address lowercased; owners() is lowercase too, so
+         the config is forgiving of however the address was typed.            */
+      return signedIn() && request.auth.token.email.lower() in owners();
     }
 
     function approved() {

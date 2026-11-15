@@ -24,8 +24,12 @@ jobs:
             echo "::error file=public/claude-bridge.js::CONFIG.firebase is still a placeholder - see DEPLOY.md step 4"
             exit 1
           fi
-          if grep -q "coach@example.com" public/claude-bridge.js firestore.rules; then
-            echo "::error::Owner email is still coach@example.com - see DEPLOY.md step 4"
+          if grep -q -e "coach@example.com" -e "you@example.com" public/claude-bridge.js firestore.rules; then
+            echo "::error::Owner email is still a placeholder - see DEPLOY.md step 4"
+            exit 1
+          fi
+          if ! grep -q "ownerEmails" public/claude-bridge.js; then
+            echo "::error file=public/claude-bridge.js::ownerEmails is missing"
             exit 1
           fi
 

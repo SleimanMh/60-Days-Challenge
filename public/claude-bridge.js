@@ -39,7 +39,7 @@
     /* Who may approve athletes and assign levels: the coach's Google account,
        and anyone else you trust to run the challenge. Must match the owners()
        list in firestore.rules exactly. */
-    ownerEmails: ["coach@example.com"],
+    ownerEmails: ["rtrader2002@gmail.com"],
     /* The coach's first name, as athletes see it in the page's messages. */
     coachName: "Raji",
     /* Shown on the sign-in gate. */
