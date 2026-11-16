@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b0b0c">
+<script>document.documentElement.className += " js intro";</script>
 <title>60 Days Challenge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -115,7 +117,7 @@ h2{font-family:var(--display);font-weight:800;text-transform:uppercase;letter-sp
 .phase{margin:22px 0 10px;display:flex;align-items:center;gap:12px;font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.2em;font-size:14px;color:var(--muted)}
 .phase::after{content:"";flex:1;height:1px;background:var(--line)}
 .phase em{font-style:normal;color:var(--gold)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:10px}
 .tile{position:relative;text-align:left;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 12px 10px;display:grid;gap:6px;min-height:138px;transition:border-color .15s ease,background .15s ease,transform .12s ease}
 .tile:hover{border-color:#4a4a50}
 .tile:active{transform:scale(.985)}
@@ -188,15 +190,265 @@ footer::before,footer::after{content:"—";margin:0 12px;color:var(--gold)}
   .p-stats{grid-template-columns:repeat(2,1fr)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* =====================================================================
+   Motion + polish layer.
+   The page rebuilds its sections on every change, so nothing here relies
+   on a plain transition between two states of one element. Entrances run
+   once (intro / reveal -> settled); animated values resume from what was
+   last on screen (tween() in the script); one-off moments are keyed to an
+   event and carry their elapsed time across rebuilds via --t.
+   ===================================================================== */
+:root{
+  --ease-out:cubic-bezier(.2,.8,.2,1);
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --acc:var(--gold);
+}
+body{overflow-x:clip}
+
+/* ---- top progress line: your 60 days, always in view ---- */
+.topline{position:fixed;left:0;top:0;width:100%;height:3px;z-index:70;pointer-events:none}
+.topline i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--red),var(--gold) 70%,#ffd34d);box-shadow:0 0 14px rgba(246,185,18,.55);border-radius:0 3px 3px 0}
+
+/* ---- sticky header that frosts and condenses on scroll ---- */
+.top{position:sticky;top:0;z-index:50;isolation:isolate;justify-content:flex-start;gap:10px;transition:padding .35s var(--ease-out)}
+.top .brand{margin-right:auto}
+.top::before{content:"";position:absolute;top:0;bottom:-1px;left:50%;width:100vw;translate:-50% 0;z-index:-1;
+  background:rgba(11,11,12,.78);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);
+  border-bottom:1px solid var(--line);opacity:0;transition:opacity .35s var(--ease-out)}
+.brand img{transition:width .35s var(--ease-out)}
+body.scrolled .top{padding:9px 0;border-bottom-color:transparent}
+body.scrolled .top::before{opacity:1}
+body.scrolled .brand img{width:46px}
+.hud{display:flex;align-items:center;gap:6px;max-width:0;overflow:hidden;opacity:0;white-space:nowrap;
+  font-family:var(--display);font-weight:800;font-size:16px;letter-spacing:.04em;
+  transition:max-width .45s var(--ease-out),opacity .3s}
+.hud span{color:var(--muted);font-size:13px}
+body.scrolled .hud{max-width:180px;opacity:1}
+.hud-ring{width:16px;height:16px;border-radius:50%;flex:none;margin-right:2px;
+  background:conic-gradient(var(--gold) var(--p,0%),var(--line) 0);
+  -webkit-mask:radial-gradient(circle,transparent 4.5px,#000 5px);mask:radial-gradient(circle,transparent 4.5px,#000 5px)}
+.hud-fl{display:inline-grid;margin-left:8px;color:var(--red)}
+.hud-fl svg{width:15px;height:15px;fill:currentColor}
+.hud-fl .core{fill:var(--gold)}
+
+/* live dot on the status pill */
+.status.ok::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;vertical-align:1px;
+  background:var(--hike);animation:livePulse 2.2s var(--ease-out) infinite}
+@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(134,179,111,.65)}70%,100%{box-shadow:0 0 0 7px rgba(134,179,111,0)}}
+
+/* ---- hero entrance (static elements: plays once, replays when the sign-in gate lifts) ---- */
+.intro .eyebrow{animation:riseIn .7s var(--ease-out) .05s backwards}
+.intro .poster{animation:posterIn 1.1s var(--ease-out) backwards}
+.intro h1 .sixty{display:inline-block;animation:brushIn .7s var(--ease-spring) .15s backwards}
+.intro h1 .days{display:inline-block;animation:brushIn .7s var(--ease-spring) .28s backwards}
+.intro h1 .chal{animation:slashIn .6s var(--ease-out) .44s backwards}
+.intro .tag{animation:riseIn .6s var(--ease-out) .6s backwards}
+.intro #mission{animation:riseIn .8s var(--ease-out) .7s backwards}
+@keyframes riseIn{from{opacity:0;translate:0 18px}}
+@keyframes posterIn{from{opacity:0;scale:.94;filter:blur(10px)}}
+@keyframes brushIn{from{opacity:0;translate:0 -26px;rotate:-7deg;scale:1.15}}
+@keyframes slashIn{from{opacity:0;translate:-46px 0;clip-path:polygon(0 0,0 0,0 100%,0 100%)}}
+
+/* poster: pointer tilt with a moving glare (fine pointers only, set up in script) */
+.poster.tilt{position:relative;transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+  transition:transform .5s var(--ease-out),box-shadow .5s;will-change:transform}
+.poster.tilt:hover{box-shadow:0 40px 70px -30px rgba(246,185,18,.5)}
+.poster.tilt::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;
+  background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.22),transparent 48%);mix-blend-mode:overlay}
+.poster.tilt:hover::after{opacity:1}
+
+/* ---- section reveal on scroll ---- */
+.js .reveal{opacity:0;translate:0 26px;transition:opacity .8s var(--ease-out),translate .8s var(--ease-out)}
+.js .reveal.in{opacity:1;translate:none}
+
+/* ---- mission card ---- */
+.mission{position:relative;overflow:hidden;transition:border-color .5s,box-shadow .5s}
+.mission::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--acc);opacity:.9;transition:background .5s}
+.mission.t-run{--acc:var(--gold);border-color:rgba(246,185,18,.3)}
+.mission.t-push{--acc:var(--bone);border-color:rgba(242,239,231,.22)}
+.mission.t-hike{--acc:var(--hike);border-color:rgba(134,179,111,.38)}
+.mission > :not(.m-wm){position:relative;z-index:1}
+.m-wm{position:absolute;right:-6px;bottom:-40px;z-index:0;pointer-events:none;user-select:none;
+  font-family:var(--display);font-weight:800;font-size:200px;line-height:1;letter-spacing:-.03em;
+  color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--acc) 16%,transparent)}
+.m-row{gap:16px}
+.m-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ring{position:relative;width:54px;height:54px;flex:none}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+.ring circle{fill:none;stroke-width:5}
+.ring .trk{stroke:var(--panel-2)}
+.ring .val{stroke:var(--gold);stroke-linecap:round;filter:drop-shadow(0 0 5px rgba(246,185,18,.5))}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:18px;font-variant-numeric:tabular-nums}
+.m-stat b{display:block;font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:.04em;line-height:1.1}
+.m-stat span{font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.streak{display:flex;align-items:center;gap:6px;padding:5px 11px 5px 8px;border-radius:999px;background:var(--panel-2);
+  border:1px solid var(--line);color:#5d5a54;transition:color .4s,border-color .4s,box-shadow .4s}
+.streak svg{width:20px;height:20px;fill:currentColor;transform-origin:50% 90%}
+.streak .core{fill:transparent}
+.streak b{font-family:var(--display);font-weight:800;font-size:18px;color:var(--bone);line-height:1;font-variant-numeric:tabular-nums}
+.streak span{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.streak.lit{color:var(--gold)}
+.streak.lit .core{fill:#ffd34d}
+.streak.warm{color:#ff8a1f;border-color:rgba(255,138,31,.35)}
+.streak.warm .core{fill:var(--gold)}
+.streak.hot{color:var(--red);border-color:rgba(227,38,28,.5);box-shadow:0 0 22px -6px rgba(227,38,28,.7)}
+.streak.hot .core{fill:var(--gold)}
+.streak.warm svg,.streak.hot svg{animation:flicker 1.7s ease-in-out infinite}
+@keyframes flicker{0%,100%{transform:scale(1) rotate(-2deg)}35%{transform:scale(1.07,1.13) rotate(2deg)}70%{transform:scale(.97,1.04) rotate(-1deg)}}
+
+/* the mission button: pop + shockwave when a day is ticked */
+.btn{position:relative}
+.btn.just{animation:btnPop .55s var(--ease-spring);animation-delay:var(--t,0ms)}
+.btn.just::after{content:"";position:absolute;inset:-2px;border-radius:12px;border:2px solid var(--gold);pointer-events:none;
+  animation:shock .8s var(--ease-out) forwards;animation-delay:var(--t,0ms)}
+@keyframes btnPop{0%{scale:.92}50%{scale:1.07}100%{scale:1}}
+@keyframes shock{from{opacity:.95;scale:1}to{opacity:0;scale:1.4}}
+
+/* ---- plan tabs: a sliding pill instead of a jump ---- */
+.tabs.plan-tabs{position:relative;display:inline-grid;grid-template-columns:1fr 1fr}
+.tabs.plan-tabs::before{content:"";position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 6px);border-radius:7px;
+  background:var(--red);transition:translate .5s var(--ease-spring),background-color .35s}
+.tabs.plan-tabs[data-active="beg"]::before{translate:calc(100% + 4px) 0;background:var(--gold)}
+.tabs.plan-tabs button{position:relative;z-index:1;transition:color .3s}
+.tabs.plan-tabs button[aria-pressed]{background:transparent}
+
+/* ---- phase dividers become progress meters ---- */
+.phase::after{content:none}
+.phase{gap:12px}
+.ph-t{white-space:nowrap}
+.ph-track{flex:1;min-width:48px;height:4px;border-radius:99px;background:var(--line);overflow:hidden}
+.ph-track i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--gold),#ffd34d)}
+.ph-n{font-variant-numeric:tabular-nums;color:var(--bone);letter-spacing:.12em}
+.phase.complete em{color:var(--ink);background:var(--gold);padding:1px 8px;border-radius:4px}
+.phase.complete .ph-track i{box-shadow:0 0 12px rgba(246,185,18,.7)}
+
+/* ---- tiles ---- */
+.tile{overflow:hidden;transition:border-color .2s,background .2s,translate .25s var(--ease-out),box-shadow .25s,opacity .25s}
+.tile:hover{translate:0 -3px;box-shadow:0 16px 30px -20px rgba(0,0,0,.95)}
+.tile.run:hover{border-color:rgba(246,185,18,.55)}
+.tile.push:hover{border-color:rgba(242,239,231,.45)}
+.tile.hike:hover{border-color:rgba(134,179,111,.6)}
+.tile:active{translate:0 -1px;transform:scale(.975)}
+.tile[disabled]:hover{translate:none;box-shadow:none}
+.t-chip{display:inline-flex;align-items:center;gap:4px;letter-spacing:.07em;padding:2px 7px}
+.t-top{gap:6px}
+.t-chip svg{width:11px;height:11px;fill:currentColor;flex:none}
+/* calendar truth, once a start date is set */
+.tile.is-future{opacity:.55}
+.tile.is-future:hover{opacity:1}
+.tile.is-missed{border-color:rgba(227,38,28,.3);
+  background:repeating-linear-gradient(135deg,rgba(227,38,28,.07) 0 6px,transparent 6px 13px),var(--panel)}
+.tile.is-missed .t-day,.tile.is-missed .t-date{color:#d9564e}
+.tile.is-today{animation:breathe 2.6s ease-in-out infinite}
+.tile.is-today.is-done{animation:none}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 1px var(--red),0 0 0 0 rgba(227,38,28,.45)}60%{box-shadow:0 0 0 1px var(--red),0 0 0 9px rgba(227,38,28,0)}}
+/* the stamp: ink burst, a rubber-stamped DONE, then the check settles in */
+.tile.just-done::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
+  background:radial-gradient(circle at 50% 55%,rgba(246,185,18,.6),transparent 62%);
+  animation:ink .9s var(--ease-out) both;animation-delay:var(--t,0ms)}
+.t-stamp{position:absolute;left:50%;top:50%;z-index:2;pointer-events:none;white-space:nowrap;
+  font-family:var(--brush);font-size:30px;line-height:1;color:var(--red);padding:4px 10px 2px;
+  border:3px solid currentColor;border-radius:7px;background:rgba(11,11,12,.25);text-shadow:0 2px 0 rgba(0,0,0,.25);
+  animation:stamp .5s var(--ease-out) both,stampOut .45s ease-in forwards;
+  animation-delay:var(--t,0ms),calc(var(--t,0ms) + 1.15s)}
+.tile.just-done .t-check{animation:checkPop .5s var(--ease-spring) backwards;animation-delay:calc(var(--t,0ms) + .25s)}
+@keyframes ink{from{opacity:1;scale:.3}to{opacity:0;scale:1.7}}
+@keyframes stamp{0%{opacity:0;transform:translate(-50%,-50%) rotate(-16deg) scale(2.6)}
+  60%{opacity:1;transform:translate(-50%,-50%) rotate(-10deg) scale(.9)}
+  80%{transform:translate(-50%,-50%) rotate(-12deg) scale(1.05)}
+  100%{opacity:1;transform:translate(-50%,-50%) rotate(-11deg) scale(1)}}
+@keyframes stampOut{to{opacity:0;transform:translate(-50%,-50%) rotate(-11deg) scale(1.12)}}
+@keyframes checkPop{from{scale:0;rotate:-45deg}}
+/* tile cascade: once, when the plan first scrolls into view */
+.js .reveal.in #phases:not(.settled) .tile{animation:tileIn .55s var(--ease-out) backwards;
+  animation-delay:calc(var(--i,0) * 12ms + var(--since,0ms) + .12s)}
+@keyframes tileIn{from{opacity:0;translate:0 14px;scale:.96}}
+/* switching plans: the tiles flip over to their new targets */
+#phases.swapping .grid{perspective:1100px}
+#phases.swapping .tile{animation:flipIn .45s var(--ease-out) backwards;animation-delay:calc(var(--i,0) * 4ms)}
+@keyframes flipIn{from{opacity:0;rotate:x 75deg}}
+
+/* ---- squad board ---- */
+.pcard{position:relative;transition:border-color .3s,translate .3s var(--ease-out),box-shadow .3s}
+.pcard:hover{translate:0 -2px;box-shadow:0 20px 40px -26px rgba(0,0,0,.95)}
+.pcard.entering{animation:cardIn .6s var(--ease-out) backwards;animation-delay:calc(var(--t,0ms) + var(--d,0ms))}
+@keyframes cardIn{from{opacity:0;translate:0 18px;scale:.97}}
+.pcard.bumped{animation:bump 1.4s var(--ease-out);animation-delay:var(--t,0ms)}
+.pcard.bumped .p-count{animation:countPop .6s var(--ease-spring);animation-delay:var(--t,0ms)}
+@keyframes bump{0%{border-color:var(--gold);box-shadow:0 0 0 0 rgba(246,185,18,.5)}25%{box-shadow:0 0 0 7px rgba(246,185,18,.18)}100%{box-shadow:0 0 0 14px rgba(246,185,18,0)}}
+@keyframes countPop{0%{scale:1}40%{scale:1.3;color:var(--gold)}100%{scale:1}}
+.av{position:relative}
+.av.leader{border-color:var(--gold)!important;color:var(--gold)!important;box-shadow:0 0 16px -2px rgba(246,185,18,.55)}
+.av .crown{position:absolute;top:-14px;left:50%;width:22px;height:14px;translate:-50% 0;rotate:-10deg;color:var(--gold);
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.7))}
+.pcard.me .bar i{background-image:linear-gradient(90deg,var(--gold),#ffe48a,var(--gold));background-size:200% 100%;animation:shimmer 3.2s linear infinite}
+@keyframes shimmer{to{background-position:-200% 0}}
+
+/* ---- toasts: the squad, live ---- */
+.toasts{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));translate:-50% 0;z-index:80;
+  display:grid;gap:8px;width:min(440px,calc(100vw - 32px));pointer-events:none}
+.toast{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.35;
+  background:rgba(29,29,32,.93);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border:1px solid rgba(246,185,18,.35);box-shadow:0 18px 40px -18px rgba(0,0,0,.95);
+  animation:toastIn .5s var(--ease-spring) backwards}
+.toast b{color:var(--gold)}
+.toast.out{animation:toastOut .35s ease-in forwards}
+.av.sm{width:28px;height:28px;font-size:13px;border-width:1.5px}
+@keyframes toastIn{from{opacity:0;translate:0 24px;scale:.95}}
+@keyframes toastOut{to{opacity:0;translate:0 10px;scale:.97}}
+
+/* ---- milestone celebration ---- */
+.celebrate{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:24px;cursor:pointer;
+  background:radial-gradient(55% 45% at 50% 46%,rgba(52,38,6,.8),rgba(11,11,12,.95) 75%);
+  -webkit-backdrop-filter:blur(10px) saturate(70%);backdrop-filter:blur(10px) saturate(70%);animation:fadeIn .3s ease-out both}
+.celebrate canvas{position:absolute;inset:0;width:100%;height:100%}
+.cel-inner{position:relative;text-align:center;animation:celIn .75s var(--ease-spring) .05s both}
+.cel-num{font-family:var(--brush);color:var(--gold);font-size:clamp(110px,26vw,220px);line-height:.85;text-shadow:0 12px 50px rgba(246,185,18,.4)}
+.cel-days{font-family:var(--brush);font-size:clamp(36px,8vw,64px);line-height:1;margin-top:-4px}
+.cel-tag{display:inline-block;margin-top:16px;font-family:var(--display);font-style:italic;font-weight:800;text-transform:uppercase;
+  font-size:clamp(22px,5vw,36px);color:var(--ink);background:var(--gold);padding:2px 20px 0 14px;transform:skew(-8deg);
+  clip-path:polygon(1% 8%,100% 0,98% 92%,0 100%);animation:slashIn .5s var(--ease-out) .35s backwards}
+.cel-sub{margin:16px 0 0;font-size:16px;opacity:.88;animation:riseIn .5s var(--ease-out) .55s backwards}
+.cel-hint{margin:22px 0 0;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.celebrate.out{animation:fadeOut .45s ease-in forwards}
+@keyframes fadeIn{from{opacity:0}}
+@keyframes fadeOut{to{opacity:0}}
+@keyframes celIn{from{opacity:0;scale:.6;rotate:-6deg}}
+
+.note:not([hidden]){animation:riseIn .45s var(--ease-out)}
+
+@media (max-width:440px){
+  body.scrolled .brand div{display:none}
+  .ph-t{display:none}
+  .m-wm{font-size:150px;bottom:-30px}
+  .t-stamp{font-size:24px}
+  .t-chip{font-size:9.5px;letter-spacing:.04em;padding:2px 6px;gap:3px}
+  .t-chip svg{width:9px;height:9px}
+  .t-day{font-size:13.5px;letter-spacing:.06em}
+}
+/* smallest phones: a 116px tile can't hold "DAY 02" beside "PUSH + CORE"; the icon carries it */
+@media (max-width:360px){
+  .t-chip{padding:3px 5px}
+  .t-chip svg{width:11px;height:11px}
+  .t-chip-l{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;animation-delay:0ms!important;transition:none!important}
+  .js .reveal{opacity:1;translate:none}
+  .poster.tilt{transform:none}
+}
 </style>
 </head>
 <body>
+<div class="topline" id="topline" aria-hidden="true"><i></i></div>
 <div class="wrap">
   <header class="top">
     <div class="brand">
       <img src="eagle.png" alt="Eagle Strength logo" width="264" height="125">
       <div><b>Eagle Strength</b><span>No excuses</span></div>
     </div>
+    <div class="hud" id="hud" aria-hidden="true"></div>
     <div class="status" id="status">Connecting…</div>
   </header>
 
@@ -216,7 +468,7 @@ footer::before,footer::after{content:"—";margin:0 12px;color:var(--gold)}
     <div class="admin" id="admin"></div>
   </section>
 
-  <section class="sec">
+  <section class="sec reveal">
     <div class="sec-h">
       <h2>The squad</h2>
       <p>Everyone in this challenge, live</p>
@@ -224,10 +476,10 @@ footer::before,footer::after{content:"—";margin:0 12px;color:var(--gold)}
     <div class="board" id="board"></div>
   </section>
 
-  <section class="sec">
+  <section class="sec reveal" id="plan-sec">
     <div class="sec-h">
       <h2>60-day plan</h2>
-      <div class="tabs" role="group" aria-label="Plan level">
+      <div class="tabs plan-tabs" id="plan-tabs" role="group" aria-label="Plan level">
         <button type="button" id="tab-adv" class="adv">Advanced</button>
         <button type="button" id="tab-beg" class="beg">Beginner</button>
       </div>
@@ -247,6 +499,7 @@ footer::before,footer::after{content:"—";margin:0 12px;color:var(--gold)}
 
   <footer>No excuses</footer>
 </div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
 
 <!-- Self-hosting bridge: no-op on claude.ai, maps window.claude -> Firebase elsewhere. -->
 <script src="claude-bridge.js"></script>
@@ -256,6 +509,69 @@ footer::before,footer::after{content:"—";margin:0 12px;color:var(--gold)}
 "use strict";
 /* Coach's name, set in claude-bridge.js (CONFIG.coachName). */
 var COACH = window.CHALLENGE_COACH || "Raji";
+
+/* ---------- motion kit ----------
+   Every render rebuilds its section from scratch, so a plain CSS transition
+   never gets two states of one element to move between. Three tools instead:
+     tween()  animate a value from wherever it was last shown, across rebuilds
+     fire()/shot()  a one-off moment keyed to an event, not to an element; a
+                    rebuild mid-animation resumes it via a negative delay (--t)
+     later()  run after the browser has painted the starting state          */
+var REDUCED = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+function now(){ return window.performance && performance.now ? performance.now() : Date.now(); }
+var LATER = [], laterQueued = false;
+function later(fn){
+  LATER.push(fn); if (laterQueued) return; laterQueued = true;
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){
+    laterQueued = false; var q = LATER; LATER = [];
+    q.forEach(function(f){ try { f(); } catch(_){} });
+  }); });
+}
+var MEM = {};
+function easeOut(x){ return 1 - Math.pow(1 - x, 3); }
+function tween(node, key, prop, value, show, dur){
+  var t = now(), m = MEM[key];
+  if (!m) m = MEM[key] = { from: 0, to: value, t0: t };
+  else if (m.to !== value){
+    var e = Math.min(1, (t - m.t0) / dur);
+    m.from = m.from + (m.to - m.from) * easeOut(e); m.to = value; m.t0 = t;
+  }
+  if (REDUCED || t - m.t0 >= dur){ node.style.setProperty(prop, show(m.to)); return; }
+  node.style.transition = "none";
+  node.style.setProperty(prop, show(m.from));
+  later(function(){
+    var gone = Math.min(dur, now() - m.t0);
+    node.style.transition = prop + " " + dur + "ms cubic-bezier(.2,.8,.2,1) " + (-gone) + "ms";
+    node.style.setProperty(prop, show(m.to));
+  });
+}
+var SHOTS = {};
+function fire(key){ SHOTS[key] = now(); }
+function shot(node, key, cls, life){
+  var t0 = SHOTS[key]; if (t0 == null) return false;
+  var gone = now() - t0;
+  if (gone > life){ delete SHOTS[key]; return false; }
+  node.classList.add(cls); node.style.setProperty("--t", (-gone).toFixed(0) + "ms");
+  return true;
+}
+function buzz(p){ try { if (navigator.vibrate) navigator.vibrate(p); } catch(_){} }
+var pct = function(f){ return (f * 100).toFixed(2) + "%"; };
+
+var ICON = {
+  run:  '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.2.6 2 6.7h3.3l-.9 4.7L9.9 5H6.5z"/></svg>',
+  push: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M.6 4.9h1.3v2.2H.6zM2.3 3.4h1.6v5.2H2.3zM4.3 5.3h3.4v1.4H4.3zM8.1 3.4h1.6v5.2H8.1zM10.1 4.9h1.3v2.2h-1.3z"/></svg>',
+  hike: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M.4 10.6 4.4 3l2.1 3.5 1.4-2.1 3.7 6.2z"/></svg>'
+};
+var FLAME = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.6 1.8c.9 3.4-1.4 5.3-2.6 7.2-1 1.6-1 3.3-1 3.3s-1.9-.9-2.2-3.4C5.2 10.8 3.6 13.1 3.6 15.6c0 4 3.6 6.6 8.4 6.6s8.4-2.7 8.4-6.9c0-5.2-4.3-8.3-7.8-13.5z"/><path class="core" d="M12 22.2c-2.2 0-3.9-1.5-3.9-3.6 0-2.3 2.1-3.4 3-5.4 1.4 1.5 4.8 3.1 4.8 5.6 0 1.9-1.6 3.4-3.9 3.4z"/></svg>';
+var CROWN = '<svg class="crown" viewBox="0 0 22 14" aria-hidden="true"><path fill="currentColor" d="M1 3.6l5.2 4.1L11 .8l4.8 6.9L21 3.6l-2 10H3z"/></svg>';
+
+function streakOf(p){
+  var ti = todayIndex(p.start), end = 0, n = 0;
+  if (ti !== null && ti >= 1){ end = Math.min(ti, 60); if (!p.done[end]) end--; }
+  else { for (var d = 60; d >= 1; d--) if (p.done[d]){ end = d; break; } }
+  while (end >= 1 && p.done[end]){ n++; end--; }
+  return n;
+}
 /* ---------- the plans ---------- */
 var PATTERN = "RPRHRPPRPRPRHPRPRHRPPRPRPRHPRP"; // days 1–30, repeated for 31–60
 var BEG_PUSHUPS = 40;
@@ -362,11 +678,47 @@ function renderStatus(){
   note.textContent = msg; note.hidden = !msg;
 }
 
+function ringOf(n){
+  var R = 24, C = 2 * Math.PI * R, w = el("div","ring");
+  w.innerHTML = '<svg viewBox="0 0 54 54" aria-hidden="true"><circle class="trk" cx="27" cy="27" r="24"/>'
+    + '<circle class="val" cx="27" cy="27" r="24" stroke-dasharray="' + C.toFixed(2) + '"/></svg>';
+  tween(w.querySelector(".val"), "ring", "stroke-dashoffset", n / 60, function(f){ return (C * (1 - f)).toFixed(2) + "px"; }, 1100);
+  w.appendChild(el("b", null, String(n)));
+  return w;
+}
+function metaOf(st, sk){
+  var meta = el("div","m-meta");
+  meta.appendChild(ringOf(st.n));
+  var ms = el("div","m-stat");
+  ms.appendChild(el("b", null, st.n + " / 60"));
+  ms.appendChild(el("span", null, Math.round(st.n / 60 * 100) + "% complete"));
+  meta.appendChild(ms);
+  var f = el("div", "streak" + (sk >= 7 ? " hot" : sk >= 3 ? " warm" : sk > 0 ? " lit" : ""));
+  f.innerHTML = FLAME;
+  f.appendChild(el("b", null, String(sk)));
+  f.appendChild(el("span", null, "day streak"));
+  f.title = sk ? sk + " day" + (sk === 1 ? "" : "s") + " in a row. Don't break the chain." : "Tick today to start a streak.";
+  meta.appendChild(f);
+  return meta;
+}
+function renderHud(st, sk){
+  var hud = document.getElementById("hud");
+  if (hud) hud.innerHTML = '<span class="hud-ring" style="--p:' + (st.n / 60 * 100).toFixed(1) + '%"></span><b>' + st.n
+    + '</b><span>/60</span>' + (sk ? '<i class="hud-fl">' + FLAME + '</i><b>' + sk + '</b>' : '');
+  var line = document.querySelector("#topline i");
+  if (line) tween(line, "topline", "width", st.n / 60, pct, 1100);
+}
+
 function renderMission(){
   var box = document.getElementById("mission"); box.textContent = "";
   var level = lvl(S.uid || "_me");
   var st = stats(S.me, level), ti = todayIndex(S.me.start), day;
   if (ti !== null && ti >= 1 && ti <= 60) day = ti; else day = st.next;
+  var sk = streakOf(S.me);
+  renderHud(st, sk);
+  box.className = "mission" + (day ? " t-" + PLAN[day-1].type : "");
+  var wm = el("div","m-wm", String(day || 60).padStart(2, "0")); wm.setAttribute("aria-hidden","true");
+  box.appendChild(wm);
   var head = el("div","m-head");
   var lab = el("span","m-label", (ti!==null && ti>=1 && ti<=60 ? "Today's mission" : "Next mission")+" ");
   lab.appendChild(badge(S.uid || "_me"));
@@ -376,6 +728,7 @@ function renderMission(){
   if (!day){
     var t = el("div","m-task","All 60 days done"); t.appendChild(el("small",null,"Comfort zone: destroyed."));
     box.appendChild(t);
+    var fin = el("div","m-row"); fin.appendChild(metaOf(st, sk)); box.appendChild(fin);
   } else {
     var p = PLAN[day-1], d = describe(p, level);
     var task = el("div","m-task",d.big); task.appendChild(el("small",null,d.sub)); box.appendChild(task);
@@ -386,7 +739,9 @@ function renderMission(){
     b.type = "button";
     if (S.mode==="readonly") b.disabled = true;
     b.addEventListener("click", function(){ toggle(day); });
+    if (done) shot(b, "done:" + day, "just", 900);
     row.appendChild(b);
+    row.appendChild(metaOf(st, sk));
     box.appendChild(row);
   }
   var l2 = el("label","start"); l2.htmlFor = "start-date";
@@ -398,18 +753,22 @@ function renderMission(){
   box.appendChild(l2);
 }
 
-function personCard(uid, p){
+function personCard(uid, p, rank, of){
   var level = lvl(uid), st = stats(p, level), me = isMe(uid), T = totals(level);
   var c = el("article","pcard"+(me?" me":""));
+  c.setAttribute("data-uid", me ? "_me" : uid);
   var h = el("div","p-head");
-  h.appendChild(el("div","av",initial(uid)));
+  var leader = rank === 1 && of > 1 && st.n > 0;
+  var av = el("div","av"+(leader?" leader":""),initial(uid));
+  if (leader){ av.insertAdjacentHTML("beforeend", CROWN); av.title = "Leading the " + (level==="adv"?"Advanced":"Beginner") + " squad"; }
+  h.appendChild(av);
   var nm = el("div","p-name",nameOf(uid)+" ");
   nm.appendChild(badge(uid));
-  nm.appendChild(el("small",null, p.start ? "Started "+dateFor(p.start,1) : (st.next ? "Next up: Day "+st.next : "Finished")));
+  nm.appendChild(el("small",null, (of > 1 ? "#" + rank + " · " : "") + (p.start ? "Started "+dateFor(p.start,1) : (st.next ? "Next up: Day "+st.next : "Finished"))));
   h.appendChild(nm);
   var cnt = el("div","p-count",String(st.n)); cnt.appendChild(el("span",null," / 60")); h.appendChild(cnt);
   c.appendChild(h);
-  var bar = el("div","bar"); var i = el("i"); i.style.width = (st.n/60*100).toFixed(1)+"%"; bar.appendChild(i);
+  var bar = el("div","bar"); var i = el("i"); tween(i, "bar:" + (me ? "_me" : uid), "width", st.n/60, pct, 1000); bar.appendChild(i);
   bar.setAttribute("role","progressbar"); bar.setAttribute("aria-valuemin","0"); bar.setAttribute("aria-valuemax","60"); bar.setAttribute("aria-valuenow",String(st.n));
   bar.setAttribute("aria-label", nameOf(uid)+" days completed");
   c.appendChild(bar);
@@ -419,19 +778,73 @@ function personCard(uid, p){
     : [[fmt(st.km),"km run"],[fmt(Math.round(st.plank/6)/10),"plank min"],[fmt(st.pu),"pushups"],[st.hk+"/"+T.hk,"hikes"]];
   cells.forEach(function(x){ var d = el("div"); d.appendChild(el("b",null,x[0])); d.appendChild(el("span",null,x[1])); g.appendChild(d); });
   c.appendChild(g);
+  var key = me ? "_me" : uid;
+  shot(c, "bump:" + key, "bumped", 1400);
+  shot(c, "enter:" + key, "entering", 1800);
   return c;
 }
 
+/* Someone else ticked a day while you were watching. */
+var SEEN = {}, ENTERED = {}, boardLive = false;
+function watchSquad(){
+  if (S.mode !== "live") return;
+  Object.keys(S.people).forEach(function(id){
+    if (isMe(id)) return;
+    var cur = S.people[id].done, prev = SEEN[id];
+    if (prev && boardLive){
+      var added = Object.keys(cur).filter(function(k){ return !prev[k]; }).map(Number);
+      if (added.length){ fire("bump:" + id); toast(id, Math.max.apply(null, added)); }
+    }
+    SEEN[id] = Object.assign({}, cur);
+  });
+  boardLive = true;
+}
+function toast(uid, day){
+  var box = document.getElementById("toasts"); if (!box) return;
+  var p = PLAN[day-1];
+  var what = p.type==="run" ? p.km.toFixed(1)+" km run" : p.type==="push" ? "push + core" : "hike";
+  var t = el("div","toast");
+  t.appendChild(el("span","av sm",initial(uid)));
+  var tx = el("span"); tx.appendChild(el("b",null,nameOf(uid)));
+  tx.appendChild(document.createTextNode(" just smashed Day " + day + " · " + what));
+  t.appendChild(tx);
+  box.appendChild(t);
+  while (box.children.length > 3) box.removeChild(box.firstChild);
+  setTimeout(function(){ t.classList.add("out"); setTimeout(function(){ if (t.parentNode) t.parentNode.removeChild(t); }, 400); }, 3800);
+}
+
 function renderBoard(){
-  var b = document.getElementById("board"); b.textContent = "";
-  var meId = S.uid || "_me";
+  var b = document.getElementById("board");
+  /* FLIP, step 1: remember where every card is before the rebuild. */
+  var first = {};
+  Array.prototype.forEach.call(b.querySelectorAll(".pcard[data-uid]"), function(n){ first[n.getAttribute("data-uid")] = n.getBoundingClientRect(); });
+  watchSquad();
+  b.textContent = "";
+  var meId = S.uid || "_me", entering = 0;
   var all = [[meId, S.me]].concat(Object.keys(S.people).filter(function(id){ return id !== S.uid; }).map(function(id){ return [id, S.people[id]]; }));
   [["adv","Advanced"],["beg","Beginner"]].forEach(function(g){
     var list = all.filter(function(x){ return lvl(x[0]) === g[0]; });
     if (!list.length) return;
     list.sort(function(a,c){ var d = stats(c[1],g[0]).n - stats(a[1],g[0]).n; return d !== 0 ? d : (isMe(a[0]) ? -1 : 1); });
     b.appendChild(el("div","group-h",g[1]+" · "+list.length));
-    list.forEach(function(x){ b.appendChild(personCard(x[0], x[1])); });
+    list.forEach(function(x, i){
+      var key = isMe(x[0]) ? "_me" : x[0];
+      if (!ENTERED[key]){ ENTERED[key] = true; fire("enter:" + key); }
+      var card = personCard(x[0], x[1], i + 1, list.length);
+      card.style.setProperty("--d", (entering++ * 70) + "ms");
+      b.appendChild(card);
+    });
+  });
+  /* FLIP, steps 2-4: measure the new spots, jump back, then glide home. */
+  Array.prototype.forEach.call(b.querySelectorAll(".pcard[data-uid]"), function(n){
+    var r0 = first[n.getAttribute("data-uid")]; if (!r0 || REDUCED) return;
+    var r1 = n.getBoundingClientRect(), dx = r0.left - r1.left, dy = r0.top - r1.top;
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+    n.style.transition = "none"; n.style.transform = "translate(" + dx + "px," + dy + "px)";
+    later(function(){
+      n.style.transition = "transform .7s cubic-bezier(.34,1.3,.64,1)"; n.style.transform = "";
+      setTimeout(function(){ n.style.transition = ""; }, 750);
+    });
   });
   if (all.length === 1){
     var c = el("article","pcard invite");
@@ -490,12 +903,16 @@ function renderRules(level){
 
 function tile(p, level, mineLevel){
   var mine = !!S.me.done[p.day], ti = todayIndex(S.me.start);
-  var t = el("button","tile "+p.type+(mine?" is-done":"")+(ti===p.day?" is-today":""));
+  var t = el("button","tile "+p.type+(mine?" is-done":"")+(ti===p.day?" is-today":"")
+    +(ti!==null && p.day<ti && !mine ? " is-missed" : "")+(ti!==null && p.day>ti ? " is-future" : ""));
   t.type = "button"; t.setAttribute("aria-pressed", mine ? "true" : "false");
+  t.style.setProperty("--i", p.day - 1);
   if (S.mode==="readonly") t.disabled = true;
   var top = el("span","t-top");
   top.appendChild(el("span","t-day","DAY "+(p.day<10?"0":"")+p.day));
-  top.appendChild(el("span","t-chip", p.type==="run"?"Run":p.type==="push"?"Push + Core":"Hiking"));
+  var chip = el("span","t-chip"); chip.innerHTML = ICON[p.type];
+  chip.appendChild(el("span","t-chip-l",p.type==="run"?"Run":p.type==="push"?"Push + Core":"Hiking"));
+  top.appendChild(chip);
   t.appendChild(top);
   var tg = el("span","t-target"), sub;
   if (p.type==="run"){ tg.textContent = p.km.toFixed(1); tg.appendChild(el("small",null,"km")); sub = p.day===1 ? "Opening run" : "+100 m"; }
@@ -518,7 +935,14 @@ function tile(p, level, mineLevel){
   t.appendChild(foot);
   var ck = el("span","t-check"); ck.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   t.appendChild(ck);
-  t.setAttribute("aria-label","Day "+p.day+": "+describe(p, level).big+(mine?", done":", not done"));
+  if (mine && shot(t, "done:" + p.day, "just-done", 1700)){
+    var stamp = el("span","t-stamp","Done!"); stamp.setAttribute("aria-hidden","true");
+    stamp.style.setProperty("--t", t.style.getPropertyValue("--t"));
+    stamp.addEventListener("animationend", function(e){ if (e.animationName === "stampOut" && stamp.parentNode) stamp.parentNode.removeChild(stamp); });
+    t.appendChild(stamp);
+  }
+  t.setAttribute("aria-label","Day "+p.day+": "+describe(p, level).big+(mine?", done":", not done")
+    +(ti!==null && p.day<ti && !mine ? ", missed" : ""));
   t.addEventListener("click", function(){ toggle(p.day); });
   return t;
 }
@@ -530,10 +954,18 @@ function renderGrid(){
   document.getElementById("plan-hint").textContent = level === mineLevel
     ? "Your plan. Tap a day to mark it done. Others' check-ins show as initials."
     : "You're viewing the " + (level==="adv"?"Advanced":"Beginner") + " plan. Ticks still count for your own " + (mineLevel==="adv"?"Advanced":"Beginner") + " plan.";
+  var pt = document.getElementById("plan-tabs"); if (pt) pt.setAttribute("data-active", level);
   renderRules(level);
   var w = document.getElementById("phases"); w.textContent = "";
+  if (phasesIn && !w.classList.contains("settled")) w.style.setProperty("--since", (-(now() - phasesIn)).toFixed(0) + "ms");
   [[1,30,"Phase 1","Days 1–30 · build the base"],[31,60,"Phase 2","Days 31–60 · push past it"]].forEach(function(ph){
-    var h = el("div","phase"); h.appendChild(el("em",null,ph[2])); h.appendChild(document.createTextNode(ph[3])); w.appendChild(h);
+    var dn = PLAN.slice(ph[0]-1, ph[1]).filter(function(p){ return S.me.done[p.day]; }).length;
+    var h = el("div","phase"+(dn===30?" complete":""));
+    h.appendChild(el("em",null,ph[2]+(dn===30?" ✓":""))); h.appendChild(el("span","ph-t",ph[3]));
+    var tr = el("span","ph-track"), fill = el("i"); tr.appendChild(fill); h.appendChild(tr);
+    tween(fill, "phase" + ph[0], "width", dn / 30, pct, 900);
+    h.appendChild(el("span","ph-n",dn+"/30"));
+    w.appendChild(h);
     var g = el("div","grid");
     PLAN.slice(ph[0]-1, ph[1]).forEach(function(p){ g.appendChild(tile(p, level, mineLevel)); });
     w.appendChild(g);
@@ -542,16 +974,131 @@ function renderGrid(){
 
 function render(){ renderStatus(); renderMission(); renderAdmin(); renderBoard(); renderGrid(); }
 
-document.getElementById("tab-adv").addEventListener("click", function(){ S.view = "adv"; renderGrid(); });
-document.getElementById("tab-beg").addEventListener("click", function(){ S.view = "beg"; renderGrid(); });
+var swapTimer = null;
+function switchPlan(level){
+  if (viewLevel() === level) return;
+  S.view = level;
+  var w = document.getElementById("phases");
+  w.classList.remove("swapping"); void w.offsetWidth; w.classList.add("swapping");
+  clearTimeout(swapTimer); swapTimer = setTimeout(function(){ w.classList.remove("swapping"); }, 700);
+  renderGrid();
+}
+document.getElementById("tab-adv").addEventListener("click", function(){ switchPlan("adv"); });
+document.getElementById("tab-beg").addEventListener("click", function(){ switchPlan("beg"); });
+
+/* ---------- celebrations ---------- */
+var MILESTONES = {
+  7:  ["One week down", "Seven days. The chain has started."],
+  15: ["Quarter way", "The habit is forming. Keep feeding it."],
+  30: ["Halfway", "Phase 1 is in the bag. Now push past it."],
+  45: ["Three quarters", "The finish line can see you."],
+  60: ["Comfort zone destroyed", "Sixty days. Every single one."]
+};
+var CELEBRATED = {};
+function celebrate(n){
+  var m = MILESTONES[n]; if (!m) return;
+  buzz([18, 60, 28]);
+  var o = el("div","celebrate"); o.setAttribute("role","status");
+  var cv = document.createElement("canvas"); cv.setAttribute("aria-hidden","true"); o.appendChild(cv);
+  var inner = el("div","cel-inner");
+  inner.appendChild(el("div","cel-num",String(n)));
+  inner.appendChild(el("div","cel-days","days"));
+  inner.appendChild(el("div","cel-tag",m[0]));
+  inner.appendChild(el("p","cel-sub",m[1]));
+  inner.appendChild(el("p","cel-hint","Tap to keep going"));
+  o.appendChild(inner);
+  document.body.appendChild(o);
+  var close = function(){
+    if (o.classList.contains("out")) return;
+    o.classList.add("out"); setTimeout(function(){ if (o.parentNode) o.parentNode.removeChild(o); }, 460);
+  };
+  o.addEventListener("click", close);
+  setTimeout(close, 4200);
+  if (!REDUCED) confetti(cv);
+}
+function confetti(cv){
+  var x = cv.getContext && cv.getContext("2d"); if (!x) return;
+  var dpr = Math.min(2, window.devicePixelRatio || 1), W = innerWidth, H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr; x.scale(dpr, dpr);
+  var cols = ["#f6b912","#ffd34d","#e3261c","#f2efe7","#86b36f"], P = [];
+  for (var i = 0; i < 170; i++){
+    var a = -Math.PI / 2 + (Math.random() - .5) * 1.5, sp = 10 + Math.random() * 12;
+    P.push({ x: W / 2 + (Math.random() - .5) * W * .25, y: H * .66, vx: Math.cos(a) * sp * (.45 + Math.random()),
+      vy: Math.sin(a) * sp, w: 5 + Math.random() * 7, h: 4 + Math.random() * 10, r: Math.random() * 6,
+      vr: (Math.random() - .5) * .38, c: cols[i % cols.length] });
+  }
+  var t0 = now(), life = 2800;
+  (function step(){
+    var t = now() - t0; x.clearRect(0, 0, W, H);
+    P.forEach(function(p){
+      p.vy += .34; p.vx *= .985; p.vy *= .985; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.globalAlpha = Math.max(0, 1 - t / life);
+      x.fillStyle = p.c; x.fillRect(-p.w / 2, -p.h / 2, p.w, p.h * Math.abs(Math.cos(p.r * 1.7)) + 1); x.restore();
+    });
+    if (t < life && cv.isConnected) requestAnimationFrame(step);
+  })();
+}
+
+/* ---------- page-level motion ---------- */
+var phasesIn = 0;
+(function(){
+  var reveal = document.querySelectorAll(".reveal");
+  function shown(n){
+    n.classList.add("in");
+    if (n.id === "plan-sec"){
+      phasesIn = now();
+      var ph = document.getElementById("phases");
+      ph.style.setProperty("--since", "0ms");
+      setTimeout(function(){ ph.classList.add("settled"); }, 1500);
+    }
+  }
+  if ("IntersectionObserver" in window){
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if (e.isIntersecting){ shown(e.target); io.unobserve(e.target); } });
+    }, { rootMargin: "0px 0px -10% 0px", threshold: 0 });
+    Array.prototype.forEach.call(reveal, function(n){ io.observe(n); });
+  } else Array.prototype.forEach.call(reveal, shown);
+  window.addEventListener("beforeprint", function(){ Array.prototype.forEach.call(reveal, shown); });
+
+  var ticking = false;
+  function onScroll(){
+    if (ticking) return; ticking = true;
+    requestAnimationFrame(function(){ ticking = false; document.body.classList.toggle("scrolled", (window.scrollY || 0) > 28); });
+  }
+  window.addEventListener("scroll", onScroll, { passive: true }); onScroll();
+
+  /* The sign-in gate lifted: raise the curtain on the hero again. */
+  window.addEventListener("cb-open", function(){
+    var de = document.documentElement; de.classList.remove("intro"); void de.offsetWidth; de.classList.add("intro");
+  });
+
+  var po = document.querySelector(".poster");
+  if (po && !REDUCED && window.matchMedia && matchMedia("(hover: hover) and (pointer: fine)").matches){
+    po.classList.add("tilt");
+    po.addEventListener("pointermove", function(e){
+      var r = po.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+      po.style.setProperty("--ry", ((fx - .5) * 10).toFixed(2) + "deg");
+      po.style.setProperty("--rx", ((.5 - fy) * 8).toFixed(2) + "deg");
+      po.style.setProperty("--gx", (fx * 100).toFixed(1) + "%");
+      po.style.setProperty("--gy", (fy * 100).toFixed(1) + "%");
+    });
+    po.addEventListener("pointerleave", function(){ po.style.setProperty("--rx","0deg"); po.style.setProperty("--ry","0deg"); });
+  }
+})();
 
 /* ---------- saving ---------- */
 var writing = false, dirty = false;
 function toggle(day){
   if (S.mode==="readonly") return;
-  if (S.me.done[day]) delete S.me.done[day]; else S.me.done[day] = true;
+  var on = !S.me.done[day];
+  if (on) S.me.done[day] = true; else delete S.me.done[day];
   if (S.uid) S.people[S.uid] = S.me;
+  if (on){ fire("done:" + day); buzz(12); }
   render(); save();
+  if (on){
+    var n = Object.keys(S.me.done).length;
+    if (MILESTONES[n] && !CELEBRATED[n]){ CELEBRATED[n] = true; setTimeout(function(){ celebrate(n); }, 450); }
+  }
 }
 function save(){
   if (!dbRef) return;

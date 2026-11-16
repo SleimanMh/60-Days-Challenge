@@ -53,45 +53,124 @@
   var SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 
   /* ------------------------------------------------------------------- GATE UI */
+  /* The first screen every athlete sees: the poster, blurred and drifting,
+     behind a glass card. States: "signin", "wait", "denied", "ok".           */
   var gateEl = null;
+  var GATE_CSS =
+    '#cb-gate{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:24px;overflow:auto;' +
+      'background:#0b0b0c;color:#f2efe7;font-family:"Barlow","Helvetica Neue",Arial,sans-serif;transition:opacity .45s ease}' +
+    '#cb-gate::before{content:"";position:fixed;inset:-60px;background:url(poster.jpg) center 30%/cover;' +
+      'filter:blur(20px) saturate(125%) brightness(.4);animation:cbDrift 26s ease-in-out infinite alternate}' +
+    '#cb-gate::after{content:"";position:fixed;inset:0;background:radial-gradient(75% 60% at 50% 38%,rgba(11,11,12,.15),rgba(11,11,12,.92))}' +
+    '#cb-gate .cb-card{position:relative;z-index:1;width:100%;max-width:420px;padding:30px 28px 24px;display:grid;gap:14px;text-align:center;' +
+      'background:rgba(21,21,23,.7);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(246,185,18,.22);' +
+      'border-radius:18px;box-shadow:0 40px 90px -30px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.05);' +
+      'animation:cbIn .7s cubic-bezier(.2,.8,.2,1) both}' +
+    '#cb-gate .cb-logo{width:104px;margin:0 auto}' +
+    '#cb-gate .cb-hero{line-height:.9;margin:-2px 0 4px}' +
+    '#cb-gate .cb-60,#cb-gate .cb-days{font-family:"Permanent Marker","Barlow Condensed",cursive;font-size:64px;display:inline-block;' +
+      'animation:cbBrush .7s cubic-bezier(.34,1.56,.64,1) both}' +
+    '#cb-gate .cb-60{color:#f6b912;animation-delay:.15s}' +
+    '#cb-gate .cb-days{margin-left:.12em;animation-delay:.27s}' +
+    '#cb-gate .cb-chal{display:inline-block;margin-top:8px;font-family:"Barlow Condensed","Arial Narrow",Arial,sans-serif;font-style:italic;' +
+      'font-weight:800;text-transform:uppercase;font-size:28px;color:#0b0b0c;background:#f6b912;padding:2px 18px 0 12px;' +
+      'transform:skew(-8deg);clip-path:polygon(1% 8%,100% 0,98% 92%,0 100%);animation:cbSlash .55s cubic-bezier(.2,.8,.2,1) .42s both}' +
+    '#cb-gate h2{margin:0;font-family:"Barlow Condensed","Arial Narrow",Arial,sans-serif;font-weight:800;text-transform:uppercase;' +
+      'letter-spacing:.06em;font-size:28px;line-height:1.05}' +
+    '#cb-gate .cb-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}' +
+    '#cb-gate p{margin:0;color:#9b978d;font-size:14.5px;line-height:1.5}' +
+    '#cb-gate p b{color:#f2efe7;font-weight:600}' +
+    '#cb-gate button{border:0;cursor:pointer;border-radius:12px;padding:14px 20px;display:inline-flex;align-items:center;justify-content:center;gap:12px;' +
+      'font-family:"Barlow Condensed","Arial Narrow",Arial,sans-serif;font-weight:800;font-size:17px;letter-spacing:.1em;' +
+      'text-transform:uppercase;background:#f6b912;color:#0b0b0c;transition:transform .15s ease,filter .15s ease,box-shadow .25s ease;' +
+      'box-shadow:0 14px 30px -14px rgba(246,185,18,.7)}' +
+    '#cb-gate button:hover{filter:brightness(1.07);transform:translateY(-1px)}' +
+    '#cb-gate button:active{transform:translateY(1px) scale(.98)}' +
+    '#cb-gate button[disabled]{opacity:.55;cursor:progress;transform:none}' +
+    '#cb-gate .cb-g{width:24px;height:24px;border-radius:50%;background:#fff;display:grid;place-items:center;flex:none}' +
+    '#cb-gate .cb-g svg{width:15px;height:15px}' +
+    '#cb-gate .cb-ghost{background:transparent;color:#f2efe7;box-shadow:inset 0 0 0 1px #3a3a40}' +
+    '#cb-gate .cb-link{background:none;box-shadow:none;color:#9b978d;font-size:13px;letter-spacing:.04em;text-transform:none;' +
+      'font-family:inherit;font-weight:500;padding:4px;text-decoration:underline;justify-self:center}' +
+    '#cb-gate .cb-err{color:#ff6b61;font-size:13.5px}' +
+    '#cb-gate .cb-fine{font-size:12px;color:#6f6c66}' +
+    '#cb-gate .cb-radar{position:relative;width:132px;height:132px;margin:0 auto 2px;display:grid;place-items:center}' +
+    '#cb-gate .cb-radar .cb-logo{position:relative;z-index:1;width:92px}' +
+    '#cb-gate .cb-radar span{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(246,185,18,.6);' +
+      'animation:cbPing 2.7s cubic-bezier(.2,.8,.2,1) infinite}' +
+    '#cb-gate .cb-radar span:nth-child(2){animation-delay:.9s}' +
+    '#cb-gate .cb-radar span:nth-child(3){animation-delay:1.8s}' +
+    '#cb-gate .cb-live{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:12.5px;letter-spacing:.08em;' +
+      'text-transform:uppercase;color:#86b36f}' +
+    '#cb-gate .cb-live::before{content:"";width:7px;height:7px;border-radius:50%;background:#86b36f;animation:cbDot 2s ease-out infinite}' +
+    '#cb-gate .cb-ok{width:92px;height:92px;margin:6px auto 4px;border-radius:50%;background:#86b36f;display:grid;place-items:center;' +
+      'box-shadow:0 0 0 10px rgba(134,179,111,.15),0 20px 50px -10px rgba(134,179,111,.6);animation:cbPop .6s cubic-bezier(.34,1.56,.64,1) both}' +
+    '#cb-gate .cb-ok path{stroke-dasharray:40;stroke-dashoffset:40;animation:cbDraw .5s ease-out .3s forwards}' +
+    '#cb-gate.cb-out{opacity:0;pointer-events:none}' +
+    '#cb-gate.cb-out .cb-card{transform:translateY(-14px) scale(.97);transition:transform .45s ease}' +
+    '@keyframes cbIn{from{opacity:0;transform:translateY(22px) scale(.97)}}' +
+    '@keyframes cbBrush{from{opacity:0;transform:translateY(-22px) rotate(-7deg) scale(1.15)}}' +
+    '@keyframes cbSlash{from{opacity:0;clip-path:polygon(0 0,0 0,0 100%,0 100%)}}' +
+    '@keyframes cbDrift{from{transform:scale(1.06) translate(-1.5%,-1%)}to{transform:scale(1.14) translate(1.5%,1.2%)}}' +
+    '@keyframes cbPing{from{transform:scale(.5);opacity:1}to{transform:scale(1.25);opacity:0}}' +
+    '@keyframes cbDot{0%{box-shadow:0 0 0 0 rgba(134,179,111,.7)}80%,100%{box-shadow:0 0 0 8px rgba(134,179,111,0)}}' +
+    '@keyframes cbPop{from{transform:scale(0)}}' +
+    '@keyframes cbDraw{to{stroke-dashoffset:0}}' +
+    '@media (max-width:380px){#cb-gate .cb-60,#cb-gate .cb-days{font-size:54px}#cb-gate .cb-card{padding:26px 20px 20px}}' +
+    '@media (prefers-reduced-motion:reduce){#cb-gate *,#cb-gate::before{animation:none!important;transition:none!important}' +
+      '#cb-gate .cb-ok path{stroke-dashoffset:0}}';
 
-  function gate(parts) {
+  var GOOGLE_G = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/>' +
+    '<path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.2 5.5-4.7 7.2l7.6 5.9c4.4-4.1 6.9-10.1 6.9-17.6z"/>' +
+    '<path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/>' +
+    '<path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>';
+
+  function gate(parts, state) {
     if (!gateEl) {
       gateEl = document.createElement("div");
       gateEl.id = "cb-gate";
-      gateEl.innerHTML =
-        '<style>' +
-        '#cb-gate{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;' +
-        'padding:24px;background:#0b0b0c;color:#f2efe7;' +
-        'font-family:"Barlow","Helvetica Neue",Arial,sans-serif;overflow:auto}' +
-        '#cb-gate .cb-card{width:100%;max-width:420px;background:#151517;border:1px solid #2b2b2f;' +
-        'border-radius:14px;padding:28px;display:grid;gap:14px;text-align:center}' +
-        '#cb-gate img{width:120px;margin:0 auto}' +
-        '#cb-gate h2{margin:0;font-family:"Barlow Condensed","Arial Narrow",Arial,sans-serif;' +
-        'font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:26px;line-height:1.05}' +
-        '#cb-gate p{margin:0;color:#9b978d;font-size:14.5px;line-height:1.5}' +
-        '#cb-gate button{border:0;cursor:pointer;border-radius:10px;padding:13px 20px;' +
-        'font-family:"Barlow Condensed","Arial Narrow",Arial,sans-serif;font-weight:800;font-size:17px;' +
-        'letter-spacing:.1em;text-transform:uppercase;background:#f6b912;color:#0b0b0c}' +
-        '#cb-gate button:hover{filter:brightness(1.08)}' +
-        '#cb-gate button[disabled]{opacity:.5;cursor:not-allowed}' +
-        '#cb-gate .cb-link{background:none;color:#9b978d;font-size:13px;letter-spacing:.04em;' +
-        'text-transform:none;font-family:inherit;font-weight:500;padding:4px;text-decoration:underline}' +
-        '#cb-gate .cb-err{color:#e3261c;font-size:13.5px}' +
-        '</style><div class="cb-card"></div>';
+      gateEl.setAttribute("role", "dialog");
+      gateEl.setAttribute("aria-modal", "true");
+      gateEl.innerHTML = "<style>" + GATE_CSS + "</style><div class=\"cb-card\"></div>";
       document.body.appendChild(gateEl);
     }
+    gateEl.setAttribute("data-state", state || "plain");
     var card = gateEl.querySelector(".cb-card");
     card.textContent = "";
-    var logo = document.createElement("img");
-    logo.src = "eagle.png"; logo.alt = "";
-    logo.onerror = function () { logo.remove(); };
-    card.appendChild(logo);
+    /* restart the card's entrance for each new state */
+    card.style.animation = "none"; void card.offsetWidth; card.style.animation = "";
     parts.forEach(function (n) { card.appendChild(n); });
     return card;
   }
 
-  function closeGate() { if (gateEl) { gateEl.remove(); gateEl = null; } }
+  /* Fade the gate away and tell the page, so it can raise its own curtain. */
+  function closeGate() {
+    if (!gateEl) return;
+    var g = gateEl; gateEl = null;
+    g.classList.add("cb-out");
+    try { window.dispatchEvent(new Event("cb-open")); } catch (e) { /* old browser */ }
+    setTimeout(function () { if (g.parentNode) g.parentNode.removeChild(g); }, 480);
+  }
+
+  function logo() {
+    var i = document.createElement("img");
+    i.src = "eagle.png"; i.alt = ""; i.className = "cb-logo";
+    i.onerror = function () { i.remove(); };
+    return i;
+  }
+  function brushTitle() {
+    var h = node("div", null, "cb-hero");
+    h.setAttribute("aria-hidden", "true");
+    h.innerHTML = '<span class="cb-60">60</span><span class="cb-days">Days</span><br><span class="cb-chal">Challenge</span>';
+    return h;
+  }
+  function radar() {
+    var r = node("div", null, "cb-radar");
+    r.innerHTML = "<span></span><span></span><span></span>";
+    r.appendChild(logo());
+    return r;
+  }
+  function coach() { return CONFIG.coachName || "your coach"; }
 
   function node(tag, text, cls) {
     var e = document.createElement(tag);
@@ -187,7 +266,9 @@
   }
 
   function askToSignIn(auth, A, resolve) {
-    var btn = node("button", "Sign in with Google");
+    var btn = node("button");
+    btn.type = "button";
+    btn.innerHTML = '<span class="cb-g">' + GOOGLE_G + '</span><span>Sign in with Google</span>';
     var err = node("p", "", "cb-err");
     err.hidden = true;
     btn.onclick = function () {
@@ -206,11 +287,14 @@
       });
     };
     gate([
-      node("h2", CONFIG.title),
+      logo(),
+      node("h2", CONFIG.title, "cb-sr"),
+      brushTitle(),
       node("p", CONFIG.blurb),
       btn,
-      err
-    ]);
+      err,
+      node("p", "Your name and email are only shown to " + coach() + ".", "cb-fine")
+    ], "signin");
   }
 
   /* ------------------------------------------------- ACCESS REQUEST / MEMBER */
@@ -243,31 +327,49 @@
 
   function waitingRoom(auth, A, store, FS, me, member) {
     var denied = member && member.status === "denied";
-    var parts = [
-      node("h2", denied ? "Not on this challenge" : "Access requested"),
-      node("p", denied
-        ? "Your request wasn't approved. Talk to your coach if that's a mistake."
-        : "Your coach has been asked to add you. You'll be on the board as soon as "
-          + "they approve you — reopen this link then.")
-    ];
-    if (me.email) parts.push(node("p", "Signed in as " + me.email));
+    var parts = [];
+    if (denied) {
+      parts.push(logo(), node("h2", "Not on this challenge"),
+        node("p", "You're not on the squad right now. If that's a mistake, talk to " + coach() + "."));
+    } else {
+      var p = node("p");
+      p.appendChild(document.createTextNode("Your request is with "));
+      p.appendChild(node("b", coach()));
+      p.appendChild(document.createTextNode(". Keep this page open — it lets you in by itself the moment you're approved."));
+      parts.push(radar(), node("h2", "Access requested"), p, node("div", "Waiting for approval", "cb-live"));
+    }
+    if (me.email) parts.push(node("p", "Signed in as " + me.email, "cb-fine"));
 
     if (!denied) {
-      var again = node("button", "Check again");
+      var again = node("button", "Check again", "cb-ghost");
+      again.type = "button";
       again.onclick = function () { location.reload(); };
       parts.push(again);
-      /* Live: the moment the coach approves, let them straight in. */
+      /* Live: the moment the coach approves, celebrate, then let them in. */
       try {
+        var let_in = false;
         store.onSnapshot(store.doc(FS, "members/" + me.uid), function (s) {
-          if (s.exists() && s.data().status === "approved") location.reload();
+          if (let_in || !s.exists() || s.data().status !== "approved") return;
+          let_in = true;
+          welcome();
         }, function () {});
       } catch (e) { /* ignore */ }
     }
 
     var out = node("button", "Sign out", "cb-link");
+    out.type = "button";
     out.onclick = function () { auth.signOut(A).then(function () { location.reload(); }); };
     parts.push(out);
-    gate(parts);
+    gate(parts, denied ? "denied" : "wait");
+  }
+
+  function welcome() {
+    var ok = node("div", null, "cb-ok");
+    ok.innerHTML = '<svg width="44" height="44" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" ' +
+      'stroke="#0b0b0c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    gate([ok, node("h2", "You're in."), node("p", "Welcome to the squad. Loading your board…")], "ok");
+    try { if (navigator.vibrate) navigator.vibrate([14, 50, 22]); } catch (e) { /* ignore */ }
+    setTimeout(function () { location.reload(); }, 1500);
   }
 
   /* ------------------------------------------------------- window.claude.user */
