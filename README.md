@@ -6,6 +6,12 @@ per athlete.
 
 Everyone ticks their own days. Everyone sees everyone else's progress.
 
+![Today's mission with progress ring and streak](docs/screenshots/hero.png)
+
+| Ticking a day | Sign-in on a phone |
+|---|---|
+| ![A day stamped DONE in the 60-day grid](docs/screenshots/plan-stamp.png) | ![The sign-in screen](docs/screenshots/sign-in-phone.png) |
+
 ## Layout
 
 ```
