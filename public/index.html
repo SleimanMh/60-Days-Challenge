@@ -585,6 +585,32 @@ body::after{content:"";position:fixed;inset:0;z-index:60;pointer-events:none;opa
   .splash .brand .logo{opacity:1}
   .reveal h2::after{scale:1 1}
 }
+/* ---- coach: today's check-in + athlete setup ---- */
+#admin-sec{display:grid;gap:16px}
+#admin-sec[hidden]{display:none}
+.lvl.ok{background:var(--hike);color:var(--ink)}
+.ci-date{font-weight:600;color:var(--bone)}
+.ci-sub{font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.16em;font-size:12.5px;color:var(--muted);margin-top:4px}
+.ci-what{display:block;color:var(--muted);font-weight:500;font-size:12.5px}
+.ci-miss{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:#ff6b61;background:rgba(227,38,28,.12);border:1px solid rgba(227,38,28,.35);vertical-align:1px}
+.ci-state{font-family:var(--display);font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:13px;color:var(--red);white-space:nowrap}
+.ci-state.calm{color:var(--muted)}
+.ci-done{display:flex;flex-wrap:wrap;gap:8px}
+.ci-chip{display:inline-flex;align-items:center;gap:8px;padding:4px 12px 4px 4px;border-radius:999px;font-weight:600;font-size:14px;
+  background:rgba(134,179,111,.1);border:1px solid rgba(134,179,111,.35)}
+.ci-chip .av{width:28px;height:28px;font-size:13px;border-width:1.5px;border-color:var(--hike)!important;color:var(--hike)!important}
+.ci-copy{justify-self:start;border:0;cursor:pointer;border-radius:10px;padding:10px 16px;font-family:var(--display);font-weight:800;
+  font-size:14px;letter-spacing:.1em;text-transform:uppercase;background:transparent;color:var(--bone);box-shadow:inset 0 0 0 1px #3a3a40;
+  transition:box-shadow .2s,color .2s}
+.ci-copy:hover{box-shadow:inset 0 0 0 1px var(--gold);color:var(--gold)}
+.ci-copy.copied{box-shadow:inset 0 0 0 1px var(--hike);color:var(--hike)}
+.a-ctrl{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.a-start{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.a-start input{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;color-scheme:dark;
+  font:inherit;font-size:14px;letter-spacing:0;text-transform:none;color:var(--bone);transition:border-color .3s,box-shadow .3s}
+.a-start input.saved{border-color:var(--hike);box-shadow:0 0 0 3px rgba(134,179,111,.22)}
+.a-start input[disabled]{opacity:.5}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;animation-delay:0ms!important;transition:none!important}
   .js .reveal{opacity:1;translate:none}
@@ -598,7 +624,7 @@ body::after{content:"";position:fixed;inset:0;z-index:60;pointer-events:none;opa
   <div class="sp-stage">
     <div class="sp-eagle"><img src="eagle.png" alt="" width="264" height="125"></div>
     <div class="sp-title"><span class="sp-60">60</span><span class="sp-days">Days</span></div>
-    <div class="sp-icons"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.4 18.6v-1.3c0-2 1.1-3.3 2.9-3.4l3.2-4.8c.4-.6 1.2-.8 1.8-.4l1.5 1-1 2.2 4.4 1.2c3.7 1 6.4 2 6.4 4.3v1.2z"/><path d="M2.4 19.6h19.2v1.4H2.4z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.4 10h2.1v4H1.4zM4 7.3h3.1v9.4H4zM7.6 11h8.8v2H7.6zM16.9 7.3H20v9.4h-3.1zM20.5 10h2.1v4h-2.1z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 3.4h21v2.2h-21z"/><circle cx="12" cy="9.6" r="2.3"/><path d="M8.3 5.4l1.9 5.6-1.6.5-1.9-5.6zM15.7 5.4l-1.9 5.6 1.6.5 1.9-5.6zM10.8 11.6h2.4v5.6h-2.4zM10.9 16.6l1.6.9-2.3 4.6-1.6-.9zM13.1 16.6l-1.6.9 2.3 4.6 1.6-.9z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 9.2V7.5a4.4 4.4 0 0 1 8.8 0v1.7h-2.2V7.5a2.2 2.2 0 0 0-4.4 0v1.7z"/><path d="M12 8.6a7.2 7.2 0 0 1 6.3 10.7l-.7 1.3H6.4l-.7-1.3A7.2 7.2 0 0 1 12 8.6z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.2 20.8 8.4 7.6l3.8 6.3 2.5-3.8 8.1 10.7z"/></svg></div>
+    <div class="sp-icons"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.4 18.6v-1.3c0-2 1.1-3.3 2.9-3.4l3.2-4.8c.4-.6 1.2-.8 1.8-.4l1.5 1-1 2.2 4.4 1.2c3.7 1 6.4 2 6.4 4.3v1.2z"/><path d="M2.4 19.6h19.2v1.4H2.4z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.4 10h2.1v4H1.4zM4 7.3h3.1v9.4H4zM7.6 11h8.8v2H7.6zM16.9 7.3H20v9.4h-3.1zM20.5 10h2.1v4h-2.1z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="19.4" cy="8.3" r="2.3"/><path d="M1.6 18.2l15-6.6 1 2.1-15 6.6z"/><path d="M16.3 11.6h2.2v8.6h-2.2z"/><path d="M.8 20.6h22.4v1.7H.8z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 9.2V7.5a4.4 4.4 0 0 1 8.8 0v1.7h-2.2V7.5a2.2 2.2 0 0 0-4.4 0v1.7z"/><path d="M12 8.6a7.2 7.2 0 0 1 6.3 10.7l-.7 1.3H6.4l-.7-1.3A7.2 7.2 0 0 1 12 8.6z"/></svg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.2 20.8 8.4 7.6l3.8 6.3 2.5-3.8 8.1 10.7z"/></svg></div>
     <div class="sp-bar"><i></i></div>
     <div class="sp-cap">No excuses</div>
   </div>
@@ -625,13 +651,14 @@ body::after{content:"";position:fixed;inset:0;z-index:60;pointer-events:none;opa
   </section>
 
   <div class="bands" aria-hidden="true">
-    <div class="band b2"><div class="band-track"><span class="band-item">Pull · Push · Hike<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 3.4h21v2.2h-21z"/><circle cx="12" cy="9.6" r="2.3"/><path d="M8.3 5.4l1.9 5.6-1.6.5-1.9-5.6zM15.7 5.4l-1.9 5.6 1.6.5 1.9-5.6zM10.8 11.6h2.4v5.6h-2.4zM10.9 16.6l1.6.9-2.3 4.6-1.6-.9zM13.1 16.6l-1.6.9 2.3 4.6 1.6-.9z"/></svg></span><span class="band-item">No excuses<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2a9.8 9.8 0 1 1 0 19.6 9.8 9.8 0 0 1 0-19.6zm0 3.3a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg></span><span class="band-item">60 days<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.2 20.8 8.4 7.6l3.8 6.3 2.5-3.8 8.1 10.7z"/></svg></span><span class="band-item">Run 3 → 5.5 km<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.4 18.6v-1.3c0-2 1.1-3.3 2.9-3.4l3.2-4.8c.4-.6 1.2-.8 1.8-.4l1.5 1-1 2.2 4.4 1.2c3.7 1 6.4 2 6.4 4.3v1.2z"/><path d="M2.4 19.6h19.2v1.4H2.4z"/></svg></span><span class="band-item">50 Eagles pushups<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.4 10h2.1v4H1.4zM4 7.3h3.1v9.4H4zM7.6 11h8.8v2H7.6zM16.9 7.3H20v9.4h-3.1zM20.5 10h2.1v4h-2.1z"/></svg></span><span class="band-item">Dragon flags<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 9.2V7.5a4.4 4.4 0 0 1 8.8 0v1.7h-2.2V7.5a2.2 2.2 0 0 0-4.4 0v1.7z"/><path d="M12 8.6a7.2 7.2 0 0 1 6.3 10.7l-.7 1.3H6.4l-.7-1.3A7.2 7.2 0 0 1 12 8.6z"/></svg></span><span class="band-item">Pull · Push · Hike<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 3.4h21v2.2h-21z"/><circle cx="12" cy="9.6" r="2.3"/><path d="M8.3 5.4l1.9 5.6-1.6.5-1.9-5.6zM15.7 5.4l-1.9 5.6 1.6.5 1.9-5.6zM10.8 11.6h2.4v5.6h-2.4zM10.9 16.6l1.6.9-2.3 4.6-1.6-.9zM13.1 16.6l-1.6.9 2.3 4.6 1.6-.9z"/></svg></span><span class="band-item">No excuses<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2a9.8 9.8 0 1 1 0 19.6 9.8 9.8 0 0 1 0-19.6zm0 3.3a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg></span><span class="band-item">60 days<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.2 20.8 8.4 7.6l3.8 6.3 2.5-3.8 8.1 10.7z"/></svg></span><span class="band-item">Run 3 → 5.5 km<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.4 18.6v-1.3c0-2 1.1-3.3 2.9-3.4l3.2-4.8c.4-.6 1.2-.8 1.8-.4l1.5 1-1 2.2 4.4 1.2c3.7 1 6.4 2 6.4 4.3v1.2z"/><path d="M2.4 19.6h19.2v1.4H2.4z"/></svg></span><span class="band-item">50 Eagles pushups<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.4 10h2.1v4H1.4zM4 7.3h3.1v9.4H4zM7.6 11h8.8v2H7.6zM16.9 7.3H20v9.4h-3.1zM20.5 10h2.1v4h-2.1z"/></svg></span><span class="band-item">Dragon flags<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 9.2V7.5a4.4 4.4 0 0 1 8.8 0v1.7h-2.2V7.5a2.2 2.2 0 0 0-4.4 0v1.7z"/><path d="M12 8.6a7.2 7.2 0 0 1 6.3 10.7l-.7 1.3H6.4l-.7-1.3A7.2 7.2 0 0 1 12 8.6z"/></svg></span><span class="band-item">Pull · Push · Hike<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 3.4h21v2.2h-21z"/><circle cx="12" cy="9.6" r="2.3"/><path d="M8.3 5.4l1.9 5.6-1.6.5-1.9-5.6zM15.7 5.4l-1.9 5.6 1.6.5 1.9-5.6zM10.8 11.6h2.4v5.6h-2.4zM10.9 16.6l1.6.9-2.3 4.6-1.6-.9zM13.1 16.6l-1.6.9 2.3 4.6 1.6-.9z"/></svg></span><span class="band-item">No excuses<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2a9.8 9.8 0 1 1 0 19.6 9.8 9.8 0 0 1 0-19.6zm0 3.3a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg></span><span class="band-item">60 days<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.2 20.8 8.4 7.6l3.8 6.3 2.5-3.8 8.1 10.7z"/></svg></span><span class="band-item">Run 3 → 5.5 km<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.4 18.6v-1.3c0-2 1.1-3.3 2.9-3.4l3.2-4.8c.4-.6 1.2-.8 1.8-.4l1.5 1-1 2.2 4.4 1.2c3.7 1 6.4 2 6.4 4.3v1.2z"/><path d="M2.4 19.6h19.2v1.4H2.4z"/></svg></span><span class="band-item">50 Eagles pushups<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.4 10h2.1v4H1.4zM4 7.3h3.1v9.4H4zM7.6 11h8.8v2H7.6zM16.9 7.3H20v9.4h-3.1zM20.5 10h2.1v4h-2.1z"/></svg></span><span class="band-item">Dragon flags<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 9.2V7.5a4.4 4.4 0 0 1 8.8 0v1.7h-2.2V7.5a2.2 2.2 0 0 0-4.4 0v1.7z"/><path d="M12 8.6a7.2 7.2 0 0 1 6.3 10.7l-.7 1.3H6.4l-.7-1.3A7.2 7.2 0 0 1 12 8.6z"/></svg></span></div></div>
-    <div class="band b1"><div class="band-track"><span class="band-item">Run 3 → 5.5 km<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.4 18.6v-1.3c0-2 1.1-3.3 2.9-3.4l3.2-4.8c.4-.6 1.2-.8 1.8-.4l1.5 1-1 2.2 4.4 1.2c3.7 1 6.4 2 6.4 4.3v1.2z"/><path d="M2.4 19.6h19.2v1.4H2.4z"/></svg></span><span class="band-item">50 Eagles pushups<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.4 10h2.1v4H1.4zM4 7.3h3.1v9.4H4zM7.6 11h8.8v2H7.6zM16.9 7.3H20v9.4h-3.1zM20.5 10h2.1v4h-2.1z"/></svg></span><span class="band-item">Dragon flags<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 9.2V7.5a4.4 4.4 0 0 1 8.8 0v1.7h-2.2V7.5a2.2 2.2 0 0 0-4.4 0v1.7z"/><path d="M12 8.6a7.2 7.2 0 0 1 6.3 10.7l-.7 1.3H6.4l-.7-1.3A7.2 7.2 0 0 1 12 8.6z"/></svg></span><span class="band-item">Pull · Push · Hike<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 3.4h21v2.2h-21z"/><circle cx="12" cy="9.6" r="2.3"/><path d="M8.3 5.4l1.9 5.6-1.6.5-1.9-5.6zM15.7 5.4l-1.9 5.6 1.6.5 1.9-5.6zM10.8 11.6h2.4v5.6h-2.4zM10.9 16.6l1.6.9-2.3 4.6-1.6-.9zM13.1 16.6l-1.6.9 2.3 4.6 1.6-.9z"/></svg></span><span class="band-item">No excuses<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2a9.8 9.8 0 1 1 0 19.6 9.8 9.8 0 0 1 0-19.6zm0 3.3a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg></span><span class="band-item">60 days<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.2 20.8 8.4 7.6l3.8 6.3 2.5-3.8 8.1 10.7z"/></svg></span><span class="band-item">Run 3 → 5.5 km<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.4 18.6v-1.3c0-2 1.1-3.3 2.9-3.4l3.2-4.8c.4-.6 1.2-.8 1.8-.4l1.5 1-1 2.2 4.4 1.2c3.7 1 6.4 2 6.4 4.3v1.2z"/><path d="M2.4 19.6h19.2v1.4H2.4z"/></svg></span><span class="band-item">50 Eagles pushups<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.4 10h2.1v4H1.4zM4 7.3h3.1v9.4H4zM7.6 11h8.8v2H7.6zM16.9 7.3H20v9.4h-3.1zM20.5 10h2.1v4h-2.1z"/></svg></span><span class="band-item">Dragon flags<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 9.2V7.5a4.4 4.4 0 0 1 8.8 0v1.7h-2.2V7.5a2.2 2.2 0 0 0-4.4 0v1.7z"/><path d="M12 8.6a7.2 7.2 0 0 1 6.3 10.7l-.7 1.3H6.4l-.7-1.3A7.2 7.2 0 0 1 12 8.6z"/></svg></span><span class="band-item">Pull · Push · Hike<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 3.4h21v2.2h-21z"/><circle cx="12" cy="9.6" r="2.3"/><path d="M8.3 5.4l1.9 5.6-1.6.5-1.9-5.6zM15.7 5.4l-1.9 5.6 1.6.5 1.9-5.6zM10.8 11.6h2.4v5.6h-2.4zM10.9 16.6l1.6.9-2.3 4.6-1.6-.9zM13.1 16.6l-1.6.9 2.3 4.6 1.6-.9z"/></svg></span><span class="band-item">No excuses<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2a9.8 9.8 0 1 1 0 19.6 9.8 9.8 0 0 1 0-19.6zm0 3.3a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg></span><span class="band-item">60 days<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.2 20.8 8.4 7.6l3.8 6.3 2.5-3.8 8.1 10.7z"/></svg></span><span class="band-item">Run 3 → 5.5 km<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.4 18.6v-1.3c0-2 1.1-3.3 2.9-3.4l3.2-4.8c.4-.6 1.2-.8 1.8-.4l1.5 1-1 2.2 4.4 1.2c3.7 1 6.4 2 6.4 4.3v1.2z"/><path d="M2.4 19.6h19.2v1.4H2.4z"/></svg></span><span class="band-item">50 Eagles pushups<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.4 10h2.1v4H1.4zM4 7.3h3.1v9.4H4zM7.6 11h8.8v2H7.6zM16.9 7.3H20v9.4h-3.1zM20.5 10h2.1v4h-2.1z"/></svg></span><span class="band-item">Dragon flags<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 9.2V7.5a4.4 4.4 0 0 1 8.8 0v1.7h-2.2V7.5a2.2 2.2 0 0 0-4.4 0v1.7z"/><path d="M12 8.6a7.2 7.2 0 0 1 6.3 10.7l-.7 1.3H6.4l-.7-1.3A7.2 7.2 0 0 1 12 8.6z"/></svg></span><span class="band-item">Pull · Push · Hike<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 3.4h21v2.2h-21z"/><circle cx="12" cy="9.6" r="2.3"/><path d="M8.3 5.4l1.9 5.6-1.6.5-1.9-5.6zM15.7 5.4l-1.9 5.6 1.6.5 1.9-5.6zM10.8 11.6h2.4v5.6h-2.4zM10.9 16.6l1.6.9-2.3 4.6-1.6-.9zM13.1 16.6l-1.6.9 2.3 4.6 1.6-.9z"/></svg></span><span class="band-item">No excuses<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2a9.8 9.8 0 1 1 0 19.6 9.8 9.8 0 0 1 0-19.6zm0 3.3a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg></span><span class="band-item">60 days<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.2 20.8 8.4 7.6l3.8 6.3 2.5-3.8 8.1 10.7z"/></svg></span></div></div>
+    <div class="band b2"><div class="band-track"><span class="band-item">Run · Push · Hike<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="19.4" cy="8.3" r="2.3"/><path d="M1.6 18.2l15-6.6 1 2.1-15 6.6z"/><path d="M16.3 11.6h2.2v8.6h-2.2z"/><path d="M.8 20.6h22.4v1.7H.8z"/></svg></span><span class="band-item">No excuses<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2a9.8 9.8 0 1 1 0 19.6 9.8 9.8 0 0 1 0-19.6zm0 3.3a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg></span><span class="band-item">60 days<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.2 20.8 8.4 7.6l3.8 6.3 2.5-3.8 8.1 10.7z"/></svg></span><span class="band-item">Run 3 → 5.5 km<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.4 18.6v-1.3c0-2 1.1-3.3 2.9-3.4l3.2-4.8c.4-.6 1.2-.8 1.8-.4l1.5 1-1 2.2 4.4 1.2c3.7 1 6.4 2 6.4 4.3v1.2z"/><path d="M2.4 19.6h19.2v1.4H2.4z"/></svg></span><span class="band-item">50 Eagles pushups<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.4 10h2.1v4H1.4zM4 7.3h3.1v9.4H4zM7.6 11h8.8v2H7.6zM16.9 7.3H20v9.4h-3.1zM20.5 10h2.1v4h-2.1z"/></svg></span><span class="band-item">Dragon flags<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 9.2V7.5a4.4 4.4 0 0 1 8.8 0v1.7h-2.2V7.5a2.2 2.2 0 0 0-4.4 0v1.7z"/><path d="M12 8.6a7.2 7.2 0 0 1 6.3 10.7l-.7 1.3H6.4l-.7-1.3A7.2 7.2 0 0 1 12 8.6z"/></svg></span><span class="band-item">Run · Push · Hike<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="19.4" cy="8.3" r="2.3"/><path d="M1.6 18.2l15-6.6 1 2.1-15 6.6z"/><path d="M16.3 11.6h2.2v8.6h-2.2z"/><path d="M.8 20.6h22.4v1.7H.8z"/></svg></span><span class="band-item">No excuses<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2a9.8 9.8 0 1 1 0 19.6 9.8 9.8 0 0 1 0-19.6zm0 3.3a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg></span><span class="band-item">60 days<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.2 20.8 8.4 7.6l3.8 6.3 2.5-3.8 8.1 10.7z"/></svg></span><span class="band-item">Run 3 → 5.5 km<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.4 18.6v-1.3c0-2 1.1-3.3 2.9-3.4l3.2-4.8c.4-.6 1.2-.8 1.8-.4l1.5 1-1 2.2 4.4 1.2c3.7 1 6.4 2 6.4 4.3v1.2z"/><path d="M2.4 19.6h19.2v1.4H2.4z"/></svg></span><span class="band-item">50 Eagles pushups<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.4 10h2.1v4H1.4zM4 7.3h3.1v9.4H4zM7.6 11h8.8v2H7.6zM16.9 7.3H20v9.4h-3.1zM20.5 10h2.1v4h-2.1z"/></svg></span><span class="band-item">Dragon flags<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 9.2V7.5a4.4 4.4 0 0 1 8.8 0v1.7h-2.2V7.5a2.2 2.2 0 0 0-4.4 0v1.7z"/><path d="M12 8.6a7.2 7.2 0 0 1 6.3 10.7l-.7 1.3H6.4l-.7-1.3A7.2 7.2 0 0 1 12 8.6z"/></svg></span><span class="band-item">Run · Push · Hike<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="19.4" cy="8.3" r="2.3"/><path d="M1.6 18.2l15-6.6 1 2.1-15 6.6z"/><path d="M16.3 11.6h2.2v8.6h-2.2z"/><path d="M.8 20.6h22.4v1.7H.8z"/></svg></span><span class="band-item">No excuses<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2a9.8 9.8 0 1 1 0 19.6 9.8 9.8 0 0 1 0-19.6zm0 3.3a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg></span><span class="band-item">60 days<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.2 20.8 8.4 7.6l3.8 6.3 2.5-3.8 8.1 10.7z"/></svg></span><span class="band-item">Run 3 → 5.5 km<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.4 18.6v-1.3c0-2 1.1-3.3 2.9-3.4l3.2-4.8c.4-.6 1.2-.8 1.8-.4l1.5 1-1 2.2 4.4 1.2c3.7 1 6.4 2 6.4 4.3v1.2z"/><path d="M2.4 19.6h19.2v1.4H2.4z"/></svg></span><span class="band-item">50 Eagles pushups<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.4 10h2.1v4H1.4zM4 7.3h3.1v9.4H4zM7.6 11h8.8v2H7.6zM16.9 7.3H20v9.4h-3.1zM20.5 10h2.1v4h-2.1z"/></svg></span><span class="band-item">Dragon flags<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 9.2V7.5a4.4 4.4 0 0 1 8.8 0v1.7h-2.2V7.5a2.2 2.2 0 0 0-4.4 0v1.7z"/><path d="M12 8.6a7.2 7.2 0 0 1 6.3 10.7l-.7 1.3H6.4l-.7-1.3A7.2 7.2 0 0 1 12 8.6z"/></svg></span></div></div>
+    <div class="band b1"><div class="band-track"><span class="band-item">Run 3 → 5.5 km<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.4 18.6v-1.3c0-2 1.1-3.3 2.9-3.4l3.2-4.8c.4-.6 1.2-.8 1.8-.4l1.5 1-1 2.2 4.4 1.2c3.7 1 6.4 2 6.4 4.3v1.2z"/><path d="M2.4 19.6h19.2v1.4H2.4z"/></svg></span><span class="band-item">50 Eagles pushups<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.4 10h2.1v4H1.4zM4 7.3h3.1v9.4H4zM7.6 11h8.8v2H7.6zM16.9 7.3H20v9.4h-3.1zM20.5 10h2.1v4h-2.1z"/></svg></span><span class="band-item">Dragon flags<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 9.2V7.5a4.4 4.4 0 0 1 8.8 0v1.7h-2.2V7.5a2.2 2.2 0 0 0-4.4 0v1.7z"/><path d="M12 8.6a7.2 7.2 0 0 1 6.3 10.7l-.7 1.3H6.4l-.7-1.3A7.2 7.2 0 0 1 12 8.6z"/></svg></span><span class="band-item">Run · Push · Hike<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="19.4" cy="8.3" r="2.3"/><path d="M1.6 18.2l15-6.6 1 2.1-15 6.6z"/><path d="M16.3 11.6h2.2v8.6h-2.2z"/><path d="M.8 20.6h22.4v1.7H.8z"/></svg></span><span class="band-item">No excuses<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2a9.8 9.8 0 1 1 0 19.6 9.8 9.8 0 0 1 0-19.6zm0 3.3a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg></span><span class="band-item">60 days<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.2 20.8 8.4 7.6l3.8 6.3 2.5-3.8 8.1 10.7z"/></svg></span><span class="band-item">Run 3 → 5.5 km<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.4 18.6v-1.3c0-2 1.1-3.3 2.9-3.4l3.2-4.8c.4-.6 1.2-.8 1.8-.4l1.5 1-1 2.2 4.4 1.2c3.7 1 6.4 2 6.4 4.3v1.2z"/><path d="M2.4 19.6h19.2v1.4H2.4z"/></svg></span><span class="band-item">50 Eagles pushups<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.4 10h2.1v4H1.4zM4 7.3h3.1v9.4H4zM7.6 11h8.8v2H7.6zM16.9 7.3H20v9.4h-3.1zM20.5 10h2.1v4h-2.1z"/></svg></span><span class="band-item">Dragon flags<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 9.2V7.5a4.4 4.4 0 0 1 8.8 0v1.7h-2.2V7.5a2.2 2.2 0 0 0-4.4 0v1.7z"/><path d="M12 8.6a7.2 7.2 0 0 1 6.3 10.7l-.7 1.3H6.4l-.7-1.3A7.2 7.2 0 0 1 12 8.6z"/></svg></span><span class="band-item">Run · Push · Hike<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="19.4" cy="8.3" r="2.3"/><path d="M1.6 18.2l15-6.6 1 2.1-15 6.6z"/><path d="M16.3 11.6h2.2v8.6h-2.2z"/><path d="M.8 20.6h22.4v1.7H.8z"/></svg></span><span class="band-item">No excuses<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2a9.8 9.8 0 1 1 0 19.6 9.8 9.8 0 0 1 0-19.6zm0 3.3a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg></span><span class="band-item">60 days<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.2 20.8 8.4 7.6l3.8 6.3 2.5-3.8 8.1 10.7z"/></svg></span><span class="band-item">Run 3 → 5.5 km<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.4 18.6v-1.3c0-2 1.1-3.3 2.9-3.4l3.2-4.8c.4-.6 1.2-.8 1.8-.4l1.5 1-1 2.2 4.4 1.2c3.7 1 6.4 2 6.4 4.3v1.2z"/><path d="M2.4 19.6h19.2v1.4H2.4z"/></svg></span><span class="band-item">50 Eagles pushups<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.4 10h2.1v4H1.4zM4 7.3h3.1v9.4H4zM7.6 11h8.8v2H7.6zM16.9 7.3H20v9.4h-3.1zM20.5 10h2.1v4h-2.1z"/></svg></span><span class="band-item">Dragon flags<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 9.2V7.5a4.4 4.4 0 0 1 8.8 0v1.7h-2.2V7.5a2.2 2.2 0 0 0-4.4 0v1.7z"/><path d="M12 8.6a7.2 7.2 0 0 1 6.3 10.7l-.7 1.3H6.4l-.7-1.3A7.2 7.2 0 0 1 12 8.6z"/></svg></span><span class="band-item">Run · Push · Hike<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="19.4" cy="8.3" r="2.3"/><path d="M1.6 18.2l15-6.6 1 2.1-15 6.6z"/><path d="M16.3 11.6h2.2v8.6h-2.2z"/><path d="M.8 20.6h22.4v1.7H.8z"/></svg></span><span class="band-item">No excuses<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2a9.8 9.8 0 1 1 0 19.6 9.8 9.8 0 0 1 0-19.6zm0 3.3a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 4a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"/></svg></span><span class="band-item">60 days<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.2 20.8 8.4 7.6l3.8 6.3 2.5-3.8 8.1 10.7z"/></svg></span></div></div>
   </div>
 
   <p class="note" id="note" hidden></p>
 
   <section class="sec" id="admin-sec" hidden>
+    <div class="admin" id="checkin"></div>
     <div class="admin" id="admin"></div>
   </section>
 
@@ -775,7 +802,8 @@ function totals(level){
 function secs(n){ return n < 60 ? n+"s" : Math.floor(n/60)+":"+String(n%60).padStart(2,"0"); }
 
 /* ---------- state ---------- */
-var S = { uid:null, me:{done:{},start:""}, people:{}, names:{}, levels:{}, mode:"loading", owner:false, view:null };
+var S = { uid:null, me:{done:{},start:""}, people:{}, names:{}, levels:{}, mode:"loading", owner:false, view:null,
+          members:null /* approved athletes, from the sign-in layer; coach only */, mnames:{} };
 var DB = null, dbRef = null, userApi = null;
 
 function clean(data){
@@ -815,8 +843,8 @@ function dateFor(start, day){
 }
 function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 function isMe(uid){ return uid === "_me" || (S.uid && uid === S.uid); }
-function nameOf(uid){ if (isMe(uid)) return S.names[S.uid] ? S.names[S.uid]+" (you)" : "You"; return S.names[uid] || "Athlete"; }
-function initial(uid){ var n = S.names[isMe(uid) ? S.uid : uid] || (isMe(uid) ? "Me" : "A"); return n.trim().charAt(0).toUpperCase() || "?"; }
+function nameOf(uid){ if (isMe(uid)) return S.names[S.uid] ? S.names[S.uid]+" (you)" : "You"; return S.names[uid] || S.mnames[uid] || "Athlete"; }
+function initial(uid){ var n = S.names[isMe(uid) ? S.uid : uid] || S.mnames[uid] || (isMe(uid) ? "Me" : "A"); return n.trim().charAt(0).toUpperCase() || "?"; }
 function fmt(n){ return n.toLocaleString(undefined,{maximumFractionDigits:1}); }
 function badge(uid){
   var l = levelOf(uid);
@@ -1033,20 +1061,172 @@ function renderBoard(){
   }
 }
 
+/* ---------- coach panels ----------
+   Everyone on the challenge: athletes with a progress record, plus anyone
+   approved who hasn't opened the page since (they have no record yet). */
+function roster(){
+  var ids = [S.uid].concat(Object.keys(S.people).filter(function(id){ return id !== S.uid; }));
+  (S.members || []).forEach(function(m){ if (ids.indexOf(m.id) < 0) ids.push(m.id); });
+  return ids.filter(Boolean).map(function(id){
+    return { id: id, p: isMe(id) ? S.me : (S.people[id] || { done:{}, start:"" }), fresh: !isMe(id) && !(id in S.people) };
+  });
+}
+function todayOf(p){
+  var ti = todayIndex(p.start);
+  if (ti === null) return { k: "nostart" };
+  if (ti < 1) return { k: "upcoming", inDays: 1 - ti };
+  if (ti > 60) return { k: "finished" };
+  var missed = 0; for (var d = 1; d < ti; d++) if (!p.done[d]) missed++;
+  return { k: p.done[ti] ? "done" : "todo", day: ti, missed: missed };
+}
+/* The panels are rebuilt on every change. Don't yank a date picker out from
+   under the coach: hold the rebuild until they leave the field. */
+function editing(box){
+  var a = document.activeElement;
+  return !!(a && box.contains(a) && a.tagName === "INPUT");
+}
+
+function renderCheckin(box){
+  if (editing(box)) return;
+  box.textContent = "";
+  var todo = [], done = [], other = [];
+  roster().forEach(function(r){
+    r.t = todayOf(r.p);
+    (r.t.k === "todo" ? todo : r.t.k === "done" ? done : other).push(r);
+  });
+  todo.sort(function(a, b){ return b.t.missed - a.t.missed; });
+
+  var h = el("h3", null, "Today's check-in");
+  h.appendChild(el("span", "lvl " + (todo.length ? "adv" : done.length ? "ok" : "none"),
+    todo.length ? todo.length + " still to go" : done.length ? "Everyone's in" : "Nobody due today"));
+  box.appendChild(h);
+  var p = el("p");
+  p.appendChild(el("span", "ci-date", new Date().toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long" })));
+  p.appendChild(document.createTextNode(todo.length
+    ? " · They haven't ticked today's day yet. Most days missed first."
+    : done.length ? " · Every athlete due today has checked in." : ""));
+  box.appendChild(p);
+
+  todo.forEach(function(r){
+    var row = el("div", "arow"), who = el("div", "who");
+    who.appendChild(el("div", "av", initial(r.id)));
+    var nm = el("div", null, nameOf(r.id));
+    if (r.t.missed) nm.appendChild(el("span", "ci-miss", r.t.missed + " missed"));
+    nm.appendChild(el("span", "ci-what", "Day " + r.t.day + " · " + describe(PLAN[r.t.day - 1], lvl(r.id)).big));
+    who.appendChild(nm); row.appendChild(who);
+    row.appendChild(el("span", "ci-state", "Not yet"));
+    box.appendChild(row);
+  });
+
+  if (todo.length){
+    var cp = el("button", "ci-copy", "Copy reminder for the group"); cp.type = "button";
+    cp.title = "Copies a message you can paste into your group chat";
+    cp.addEventListener("click", function(){
+      var msg = "60 Days Challenge — still to check in today:\n" + todo.map(function(r){
+        return "• " + nameOf(r.id).replace(/ \(you\)$/, "") + " — Day " + r.t.day + ": " + describe(PLAN[r.t.day - 1], lvl(r.id)).big;
+      }).join("\n") + "\nNo excuses.";
+      copyText(msg).then(function(){ cp.textContent = "Copied — paste it in the chat"; cp.classList.add("copied"); },
+                         function(){ window.prompt("Copy this message:", msg); });
+    });
+    box.appendChild(cp);
+  }
+
+  if (done.length){
+    box.appendChild(el("div", "ci-sub", "Done today · " + done.length));
+    var wrap = el("div", "ci-done");
+    done.forEach(function(r){
+      var c = el("span", "ci-chip"); c.appendChild(el("span", "av", initial(r.id)));
+      c.appendChild(document.createTextNode(nameOf(r.id))); c.title = "Day " + r.t.day + " done";
+      wrap.appendChild(c);
+    });
+    box.appendChild(wrap);
+  }
+
+  if (other.length){
+    box.appendChild(el("div", "ci-sub", "Not counted today · " + other.length));
+    other.forEach(function(r){
+      var row = el("div", "arow"), who = el("div", "who");
+      who.appendChild(el("div", "av", initial(r.id)));
+      var nm = el("div", null, nameOf(r.id));
+      nm.appendChild(el("span", "ci-what",
+        r.t.k === "nostart" ? "No start date yet — set one below so their days can be tracked"
+        : r.t.k === "upcoming" ? "Starts " + dateFor(r.p.start, 1) + (r.t.inDays === 1 ? " (tomorrow)" : " (in " + r.t.inDays + " days)")
+        : "Finished all 60 days"));
+      who.appendChild(nm); row.appendChild(who);
+      row.appendChild(el("span", "ci-state calm", r.t.k === "nostart" ? "No start" : r.t.k === "upcoming" ? "Upcoming" : "Finished"));
+      box.appendChild(row);
+    });
+  }
+}
+
+function copyText(t){
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t);
+  return new Promise(function(ok, no){
+    var ta = document.createElement("textarea"); ta.value = t; ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:fixed;opacity:0;top:0;left:0"; document.body.appendChild(ta); ta.select();
+    var r = false; try { r = document.execCommand("copy"); } catch(_){}
+    document.body.removeChild(ta); r ? ok() : no();
+  });
+}
+
+/* Coach sets anyone's start date. For an existing record only the start is
+   touched, never their ticks; an athlete who hasn't opened the page yet gets
+   a fresh record, so the date is waiting for them when they arrive. */
+function startFieldId(id){ return "start-" + id.replace(/[^\w-]/g, "_"); }
+/* Confirm on the field that's on screen: it is usually still focused, so the
+   panel is holding its rebuild and a freshly built field would never show. */
+function flashSaved(id){
+  fire("saved:" + id);
+  var f = document.getElementById(startFieldId(id));
+  if (!f) return;
+  f.classList.add("saved");
+  setTimeout(function(){ f.classList.remove("saved"); }, 1600);
+}
+function setStart(id, v){
+  v = /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "";
+  if (isMe(id)){ S.me.start = v; flashSaved(id); save(); render(); return; }
+  if (!DB || !S.owner) return;
+  var had = id in S.people, p = S.people[id] || { done:{}, start:"" }, old = p.start;
+  p.start = v; S.people[id] = p;
+  var ref = DB.doc("progress/" + id), body = { start: v, updated: Date.now() };
+  var write = had && ref.update ? ref.update(body) : ref.set({ done: p.done || {}, start: v, updated: body.updated });
+  Promise.resolve(write).then(function(){ flashSaved(id); render(); }, function(e){
+    p.start = old; if (!had) delete S.people[id];
+    render();
+    alert("Couldn't change " + nameOf(id) + "'s start date: " + ((e && e.message) || e) + "\n\nCheck your connection and try again.");
+  });
+  render();
+}
+
 function renderAdmin(){
   var sec = document.getElementById("admin-sec"), box = document.getElementById("admin");
   sec.hidden = !S.owner; if (!S.owner) return;
+  renderCheckin(document.getElementById("checkin"));
+  if (editing(box)) return;
   box.textContent = "";
-  var h = el("h3",null,"Admin · Assign levels"); h.appendChild(el("span","lvl adv",COACH + " only"));
+  var h = el("h3",null,"Admin · Athletes"); h.appendChild(el("span","lvl adv",COACH + " only"));
   box.appendChild(h);
-  box.appendChild(el("p",null,"Pick a level for each athlete. They switch plans as soon as you tap. New athletes start on Beginner until you assign them."));
-  var ids = [S.uid].concat(Object.keys(S.people).filter(function(id){ return id !== S.uid; }));
-  ids.forEach(function(id){
-    if (!id) return;
-    var row = el("div","arow");
+  box.appendChild(el("p",null,"Set each athlete's start date and level. Changes reach their plan straight away. Ticked days stay on their day numbers when you move a start date."));
+  roster().forEach(function(r){
+    var id = r.id, row = el("div","arow");
     var who = el("div","who"); who.appendChild(el("div","av",initial(id)));
-    var nm = el("div",null,nameOf(id)); nm.appendChild(el("small",null, stats(S.people[id]||S.me, lvl(id)).n+" / 60 days")); who.appendChild(nm);
-    row.appendChild(who);
+    var t = todayOf(r.p);
+    var nm = el("div",null,nameOf(id));
+    nm.appendChild(el("small",null, stats(r.p, lvl(id)).n + " / 60 days"
+      + (t.k === "todo" || t.k === "done" ? " · on day " + t.day : t.k === "upcoming" ? " · not started" : "")
+      + (r.fresh ? " · hasn't opened it yet" : "")));
+    who.appendChild(nm); row.appendChild(who);
+
+    var ctrl = el("div","a-ctrl");
+    var lab = el("label","a-start"); var inpId = startFieldId(id);
+    lab.htmlFor = inpId; lab.appendChild(el("span",null,"Start"));
+    var inp = el("input"); inp.type = "date"; inp.id = inpId; inp.value = r.p.start || "";
+    inp.setAttribute("aria-label", "Start date for " + nameOf(id));
+    inp.addEventListener("change", function(){ setStart(id, inp.value); });
+    inp.addEventListener("blur", function(){ setTimeout(render, 0); });   /* catch up on anything held back */
+    shot(inp, "saved:" + id, "saved", 1600);
+    lab.appendChild(inp); ctrl.appendChild(lab);
+
     var tabs = el("div","tabs"); tabs.setAttribute("role","group"); tabs.setAttribute("aria-label","Level for "+nameOf(id));
     [["beg","Beginner"],["adv","Advanced"]].forEach(function(o){
       var bt = el("button",o[0],o[1]); bt.type = "button";
@@ -1054,7 +1234,7 @@ function renderAdmin(){
       bt.addEventListener("click", function(){ assign(id, o[0]); });
       tabs.appendChild(bt);
     });
-    row.appendChild(tabs);
+    ctrl.appendChild(tabs); row.appendChild(ctrl);
     box.appendChild(row);
   });
 }
@@ -1477,6 +1657,17 @@ function writeLevels(){
 }
 
 /* ---------- connect ---------- */
+window.addEventListener("cb-members", function(e){
+  var list = (e && e.detail) || [];
+  S.members = list; list.forEach(function(m){ if (m.name) S.mnames[m.id] = m.name; });
+  render();
+});
+/* "Today" changes at midnight even if nobody touches the page. */
+(function midnight(){
+  var n = new Date(), next = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 0, 0, 5);
+  setTimeout(function(){ render(); midnight(); }, next - n);
+})();
+
 render();
 var api = window.claude && typeof window.claude.use === "function" ? window.claude : null;
 if (!api){ S.mode = "local"; renderStatus(); return; }

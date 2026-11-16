@@ -415,6 +415,10 @@
           set: function (body) {
             return store.setDoc(ref, body).catch(function (e) { throw translate(e); });
           },
+          /* merge into an existing record: changes only the fields given */
+          update: function (body) {
+            return store.updateDoc(ref, body).catch(function (e) { throw translate(e); });
+          },
           get: function () {
             return store.getDoc(ref).then(function (s) {
               return { id: s.id, exists: s.exists(), data: function () { return s.data(); } };
@@ -501,6 +505,12 @@
         else if (m.status === "approved") active.push(e);
         else off.push(e);
       });
+      /* Tell the page who's on the challenge: some approved athletes have no
+         progress record yet, and the coach's check-in list needs them too.  */
+      try {
+        window.dispatchEvent(new CustomEvent("cb-members", { detail: active.map(function (e) {
+          return { id: e.id, name: e.m.name || "" }; }) }));
+      } catch (err) { /* old browser */ }
       var byName = function (a, b) { return (a.m.name || "").localeCompare(b.m.name || ""); };
       waiting.sort(function (a, b) { return (a.m.requestedAt || 0) - (b.m.requestedAt || 0); });
       active.sort(byName); off.sort(byName);

@@ -238,6 +238,19 @@ person's name and email under one of three headings:
 Approve, and they land on the board on their next look - no reload needed if
 they're sitting on the waiting screen.
 
+**Who hasn't checked in today.** The coach's **Today's check-in** panel
+lists everyone whose day hasn't been ticked yet. It shows which day each
+person is on and that day's workout, with whoever has missed the most days
+first. Below that are who's done today, and anyone not counted: no start date
+yet, starting later, or finished. **Copy reminder for the group** puts a
+ready-made message on the clipboard to paste into your group chat. "Today"
+follows each athlete's own start date, and the list rolls over at midnight.
+
+**Start dates.** In **Admin · Athletes**, the coach can set or move anyone's
+start date. Only the date changes; their ticked days keep their numbers. This
+works even for someone approved who hasn't opened the page yet: the date is
+waiting for them when they first sign in.
+
 **Assigning plans.** Below that is the **Admin · Assign levels** panel, same
 owners only. Everyone starts on Beginner; tap Advanced for whoever earns it. They switch
 plans immediately.
