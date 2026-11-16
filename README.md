@@ -6,11 +6,15 @@ per athlete.
 
 Everyone ticks their own days. Everyone sees everyone else's progress.
 
-![Today's mission with progress ring and streak](docs/screenshots/hero.png)
+![Today's mission: progress plate, streak flame, and the event tapes](docs/screenshots/hero.jpg)
+
+| The entrance | Every workout has its athlete |
+|---|---|
+| ![The eagle and 60 DAYS on the opening screen](docs/screenshots/entrance.jpg) | ![Animated runner, pushup and hiker in the rule cards](docs/screenshots/athletes.jpg) |
 
 | Ticking a day | Sign-in on a phone |
 |---|---|
-| ![A day stamped DONE in the 60-day grid](docs/screenshots/plan-stamp.png) | ![The sign-in screen](docs/screenshots/sign-in-phone.png) |
+| ![A day stamped DONE in the 60-day grid](docs/screenshots/plan-stamp.jpg) | ![The sign-in screen](docs/screenshots/sign-in-phone.jpg) |
 
 ## Layout
 
