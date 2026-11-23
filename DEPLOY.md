@@ -260,6 +260,14 @@ that athlete's 60 days. Tap any day, past, today or ahead, to mark it done or
 not done. Ticking a day that has a photo waiting also approves the photo.
 Unticking an approved day withdraws its approval.
 
+**Days open by the real date, not the phone's.** Day 1 is the start date, and
+each later day opens at midnight. The page takes the date from your web
+server, so setting a phone to next month unlocks nothing; it even tells the
+athlete their phone's date is off. The database rules check again with
+Google's clock, allowing 14 hours for time zones. That applies to the coach's
+own days too: as a player, he can't tick his own future days. He can still
+tick or untick any day for anyone else.
+
 **Start dates.** An athlete sets their own start date once, when they begin.
 After that, only the coach can change it. Otherwise "today" could be slid
 forward to unlock days early.
@@ -316,7 +324,7 @@ somebody else, see a teammate's photo, approve themselves or promote
 themselves. All of that is enforced in `firestore.rules`, on Firebase's
 servers, not in the page. A modified page can't get around it.
 
-**Testing the rules.** `tests/rules.test.js` checks all of that (52 cases)
+**Testing the rules.** `tests/rules.test.js` checks all of that (69 cases, including the date checks)
 against Google's real Firestore emulator. Re-run it after any edit to
 `firestore.rules` (it needs Java):
 

@@ -37,6 +37,35 @@ service cloud.firestore {
       return uid + '_' + string(day);
     }
 
+    /* How many of a player's 60 days have begun - by Google's clock, not the
+       phone's, so changing a phone's date unlocks nothing. Day 1 is the start
+       date itself. A player's local day can begin up to 14 hours before the
+       same day in UTC (UTC+14 is the furthest ahead), hence the margin.      */
+    function openDays(start) {
+      return start == '' ? 0 : capAt60(daysBegun(start));
+    }
+    function daysBegun(start) {
+      let ymd = start.split('-');
+      let secs = (request.time + duration.value(14, 'h')
+                  - timestamp.date(int(ymd[0]), int(ymd[1]), int(ymd[2]))).seconds();
+      return secs < 0 ? 0 : secs / 86400 + 1;
+    }
+    function capAt60(n) {
+      return n > 60 ? 60 : n;
+    }
+    function dayNames() {
+      return ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20',
+              '21','22','23','24','25','26','27','28','29','30','31','32','33','34','35','36','37','38','39','40',
+              '41','42','43','44','45','46','47','48','49','50','51','52','53','54','55','56','57','58','59','60'];
+    }
+    /* the names of the first n days; slicing [0:0] errors, so 0 is spelled out */
+    function daysUpTo(n) {
+      return n <= 0 ? [] : dayNames()[0:n];
+    }
+    function startOf(uid) {
+      return get(/databases/$(database)/documents/progress/$(uid)).data.get('start', '');
+    }
+
     function approved() {
       return signedIn()
         && exists(/databases/$(database)/documents/members/$(request.auth.uid))
@@ -88,9 +117,18 @@ service cloud.firestore {
         && (request.resource.data.get('start', '') == resource.data.get('start', '')
             || resource.data.get('start', '') == '');
 
-      /* The owner writes anyone's days and start date, progress/_levels, and
-         deletes an athlete's record when taking them off the challenge.     */
-      allow write: if isOwner();
+      /* The owner writes any other player's days (past, today or ahead) and
+         start date, progress/_levels, and deletes a record when taking an
+         athlete off the challenge.                                          */
+      allow write: if isOwner() && docId != request.auth.uid;
+
+      /* ...but as a player himself, the coach's own future days stay locked:
+         any day he adds must already have begun.                           */
+      allow create, update: if isOwner() && docId == request.auth.uid
+        && request.resource.data.get('done', {})
+             .diff(resource == null ? {} : resource.data.get('done', {})).addedKeys()
+             .hasOnly(daysUpTo(openDays(request.resource.data.get('start', ''))));
+      allow delete: if isOwner();
     }
 
     /* --- proof of a day's workout ----------------------------------------- */
@@ -109,6 +147,7 @@ service cloud.firestore {
         && request.resource.data.status == 'pending'
         && request.resource.data.get('note', '') is string
         && request.resource.data.get('note', '').size() <= 280
+        && request.resource.data.day <= openDays(startOf(request.auth.uid))
         && (resource == null || resource.data.status != 'approved');
 
       /* The coach approves, rejects (with a reason) and deletes. */
@@ -125,6 +164,7 @@ service cloud.firestore {
         && id == proofId(request.auth.uid, request.resource.data.day)
         && request.resource.data.image is string
         && request.resource.data.image.size() < 1000000
+        && request.resource.data.day <= openDays(startOf(request.auth.uid))
         && !(exists(/databases/$(database)/documents/proofs/$(id))
              && get(/databases/$(database)/documents/proofs/$(id)).data.status == 'approved');
 

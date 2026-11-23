@@ -19,6 +19,8 @@ async function t(name, p, expectOk) {
   catch (e) { fail++; console.log('  FAIL', name, '->', (e && e.message || e).toString().slice(0, 160)); }
 }
 const OK = true, DENY = false;
+/* start dates relative to the real date, so these tests mean the same thing whenever they run */
+const utcDay = n => { const d = new Date(); d.setUTCDate(d.getUTCDate() - n); return d.toISOString().slice(0, 10); };
 (async () => {
   /* host and port come from FIRESTORE_EMULATOR_HOST, which `npm run test:rules` sets */
   const env = await initializeTestEnvironment({ projectId: 'demo-eagle',
@@ -35,6 +37,11 @@ const OK = true, DENY = false;
     await setDoc(doc(db, 'members/pend'), m('pend', 'pending'));
     await setDoc(doc(db, 'progress/sam'), { done: { '1': true }, start: '2026-11-20', updated: 1 });
     await setDoc(doc(db, 'progress/lea'), { done: {}, start: '', updated: 1 });
+    for (const [id, start] of [['dee', utcDay(5)], ['fut', utcDay(-100)], ['nos', ''], ['odd', 'soon']]) {
+      await setDoc(doc(db, 'members/' + id), m(id, 'approved'));
+      await setDoc(doc(db, 'progress/' + id), { done: {}, start, updated: 1 });
+    }
+    await setDoc(doc(db, 'progress/coach'), { done: {}, start: utcDay(2), updated: 1 });
   });
   const img = 'data:image/jpeg;base64,' + 'A'.repeat(200000);
   const proof = (uid, day, extra) => Object.assign({ uid, day, status: 'pending', note: 'did it', submittedAt: 1 }, extra || {});
@@ -85,6 +92,26 @@ const OK = true, DENY = false;
   await t('coach deletes Sam\'s proof and photo', Promise.all([deleteDoc(doc(coach, 'proofs/sam_3')), deleteDoc(doc(coach, 'proofImages/sam_2'))]), OK);
   await t('Sam deletes his own proof', deleteDoc(doc(sam, 'proofs/sam_2')), DENY);
 
+
+  console.log('\n[dates] by Google\'s clock, not the phone\'s');
+  const dee = as('dee', 'dee@x.com'), fut = as('fut', 'fut@x.com'), nos = as('nos', 'nos@x.com'), odd = as('odd', 'odd@x.com');
+  await t('Dee (on day 6) sends proof for today', setDoc(doc(dee, 'proofs/dee_6'), proof('dee', 6)), OK);
+  await t('Dee sends proof for a day already gone', setDoc(doc(dee, 'proofs/dee_1'), proof('dee', 1)), OK);
+  await t('Dee sends proof for day 8, two days early', setDoc(doc(dee, 'proofs/dee_8'), proof('dee', 8)), DENY);
+  await t('Dee uploads a photo for day 8', setDoc(doc(dee, 'proofImages/dee_8'), { uid:'dee', day:8, image: img }), DENY);
+  await t('starting in 100 days: proof for day 1', setDoc(doc(fut, 'proofs/fut_1'), proof('fut', 1)), DENY);
+  await t('no start date yet: proof for day 1', setDoc(doc(nos, 'proofs/nos_1'), proof('nos', 1)), DENY);
+  await t('a garbled start date: proof for day 1', setDoc(doc(odd, 'proofs/odd_1'), proof('odd', 1)), DENY);
+  await t('coach (on day 3) ticks his own today', updateDoc(doc(coach, 'progress/coach'), { 'done.3': true }), OK);
+  await t('coach ticks his own day 5, ahead', updateDoc(doc(coach, 'progress/coach'), { 'done.5': true }), DENY);
+  await t('coach moves his own start to the future and ticks day 1', setDoc(doc(coach, 'progress/coach'), { done: { '1': true, '3': true }, start: utcDay(-30), updated: 2 }), DENY);
+  await t('coach unticks his own day', updateDoc(doc(coach, 'progress/coach'), { done: {} }), OK);
+  await t('coach sets his own start date in the future (no days)', setDoc(doc(coach, 'progress/coach'), { done: {}, start: utcDay(-30), updated: 3 }), OK);
+  await t('...and re-saves his record while nothing has begun', setDoc(doc(coach, 'progress/coach'), { done: {}, start: utcDay(-30), updated: 4 }), OK);
+  await t('...and ticks day 1, a month early', updateDoc(doc(coach, 'progress/coach'), { 'done.1': true }), DENY);
+  await t('coach clears his own start date', updateDoc(doc(coach, 'progress/coach'), { start: '', updated: 5 }), OK);
+  await t('coach moves his start back, so today is day 2, and ticks it', setDoc(doc(coach, 'progress/coach'), { done: { '2': true }, start: utcDay(1), updated: 6 }), OK);
+  await t('coach ticks another player\'s day 50, far ahead', updateDoc(doc(coach, 'progress/fut'), { 'done.50': true }), OK);
 
   console.log('\n[unchanged] joining, names, levels');
   const newbie = as('newbie', 'newbie@x.com');

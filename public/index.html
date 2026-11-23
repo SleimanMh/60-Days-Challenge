@@ -682,6 +682,7 @@ body::after{content:"";position:fixed;inset:0;z-index:60;pointer-events:none;opa
 .dcell.hike::before{background:var(--hike)}
 .dcell.ahead{color:var(--muted)}
 .dcell.on{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+.dcell.shut{opacity:.3;cursor:not-allowed}
 .dcell.on::before{opacity:0}
 .dcell.today{box-shadow:0 0 0 2px var(--red)}
 .dcell.pend::after,.dcell.rej::after{content:"";position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:var(--gold)}
@@ -942,9 +943,33 @@ function stats(p, level){
   return r;
 }
 function parseDate(s){ var a = s.split("-"); return new Date(+a[0], +a[1]-1, +a[2]); }
+/* The real date, not the phone's. The page reads the time from our own web
+   server (the Date header on any response), so setting a phone to next month
+   unlocks nothing. Until the server answers it uses the phone's clock; the
+   database rules check Google's clock regardless.                         */
+var CLOCK_SKEW = 0, clockWarned = false;
+function realNow(){ return Date.now() + CLOCK_SKEW; }
+function syncClock(){
+  if (!window.fetch) return;
+  var t0 = Date.now();
+  fetch(location.pathname || "/", { method: "HEAD", cache: "no-store" }).then(function(r){
+    var server = Date.parse(r.headers.get("date") || "");
+    if (isNaN(server)) return;
+    var before = CLOCK_SKEW;
+    CLOCK_SKEW = server + (Date.now() - t0) / 2 - Date.now();
+    if (Math.abs(CLOCK_SKEW) > 6 * 3600e3 && !clockWarned){
+      clockWarned = true;
+      try { say("Your phone's date is off, so the challenge is using the real date: " + new Date(realNow()).toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long" }) + "."); } catch(_){}
+    }
+    if (Math.abs(CLOCK_SKEW - before) > 60e3) render();
+  }).catch(function(){});
+}
+syncClock();
+document.addEventListener("visibilitychange", function(){ if (!document.hidden) syncClock(); });
+
 function todayIndex(start){
   if (!start) return null;
-  var t = new Date(); t.setHours(0,0,0,0);
+  var t = new Date(realNow()); t.setHours(0,0,0,0);
   return Math.round((t - parseDate(start)) / 86400000) + 1;
 }
 function dateFor(start, day){
@@ -1051,8 +1076,11 @@ function renderMission(){
     var row = el("div","m-row");
     var done = !!S.me.done[day], b;
     if (!athlete()){
-      /* the coach ticks his own days directly */
-      b = el("button","btn"+(done?" done":""), done ? "Day "+day+" done ✓" : "Mark day "+day+" done");
+      /* the coach ticks his own days directly - but not ahead of today */
+      var cl = "btn" + (done ? " done" : ""), ct = done ? "Day "+day+" done ✓" : "Mark day "+day+" done";
+      if (!done && S.uid && ti === null){ cl += " locked"; ct = "Set your start date to begin"; }
+      else if (!done && S.uid && day > ti){ cl += " locked"; ct = "Day " + day + " opens " + dateFor(S.me.start, day); }
+      b = el("button", cl, ct);
     } else {
       var pr = proofOf(S.uid, day), cls = "btn", lbl, cam = false;
       if (done){ cls += " done"; lbl = "Day " + day + " approved ✓"; }
@@ -1240,7 +1268,7 @@ function renderCheckin(box){
     owing.length ? owing.length + " still to go" : todo.length ? "Proof to review" : done.length ? "Everyone's in" : "Nobody due today"));
   box.appendChild(h);
   var p = el("p");
-  p.appendChild(el("span", "ci-date", new Date().toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long" })));
+  p.appendChild(el("span", "ci-date", new Date(realNow()).toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long" })));
   p.appendChild(document.createTextNode(todo.length
     ? " · They haven't ticked today's day yet. Most days missed first."
     : done.length ? " · Every athlete due today has checked in." : ""));
@@ -1410,7 +1438,7 @@ function tile(p, level, mineLevel){
   var mine = !!S.me.done[p.day], ti = todayIndex(S.me.start), ath = athlete();
   var pr = ath && !mine ? proofOf(S.uid, p.day) : null;
   var pending = !!(pr && pr.status === "pending"), rejected = !!(pr && pr.status === "rejected");
-  var locked = ath && !mine && (ti === null || p.day > ti);
+  var locked = !!S.uid && !mine && (ti === null || p.day > ti);   /* the coach's own days too */
   var t = el("button","tile "+p.type+(mine?" is-done":"")+(ti===p.day?" is-today":"")
     +(ti!==null && p.day<ti && !mine && !pending ? " is-missed" : "")+(ti!==null && p.day>ti ? " is-future" : "")
     +(pending ? " is-pending" : "")+(rejected ? " is-rejected" : "")+(locked ? " is-locked" : ""));
@@ -1838,9 +1866,13 @@ function say(msg, kind){
 
 function tapDay(day, e, from){
   if (S.mode === "readonly") return;
-  if (!athlete()){ var on = !S.me.done[day]; toggle(day); if (on) chalkAt(e, from); return; }
-  if (S.me.done[day]){ say("Day " + day + " is approved. Nice work.", "good"); return; }
   var ti = todayIndex(S.me.start);
+  if (!athlete()){
+    var on = !S.me.done[day];
+    if (on && S.uid && !ownDayOpen(day)) return;
+    toggle(day); if (on) chalkAt(e, from); return;
+  }
+  if (S.me.done[day]){ say("Day " + day + " is approved. Nice work.", "good"); return; }
   if (ti === null){
     say("Set your start date first, then send proof for each day.");
     var sd = document.getElementById("start-date"); if (sd && !sd.disabled) sd.focus();
@@ -1848,6 +1880,18 @@ function tapDay(day, e, from){
   }
   if (day > ti){ say("Day " + day + " opens on " + dateFor(S.me.start, day) + ". You can send proof for today and days already gone."); return; }
   openProof(day);
+}
+
+/* Your own days open one at a time, by the real date - coach included. */
+function ownDayOpen(day){
+  var ti = todayIndex(S.me.start);
+  if (ti === null){
+    say("Set your start date first.");
+    var sd = document.getElementById("start-date"); if (sd && !sd.disabled) sd.focus();
+    return false;
+  }
+  if (day > ti){ say("Day " + day + " opens on " + dateFor(S.me.start, day) + ". Your own days can't be ticked ahead of time."); return false; }
+  return true;
 }
 
 /* Phone photos are 3-5 MB; shrink to ~1280px JPEG, stepping down until it fits. */
@@ -2070,15 +2114,18 @@ function drawDays(body){
   body.appendChild(el("div","sh-eyebrow", (lv==="adv" ? "Advanced" : "Beginner") + " · " + stats(p, lv).n + " / 60 done"
     + (ti !== null && ti >= 1 && ti <= 60 ? " · on day " + ti : "")));
   var h = el("h3", null, nameOf(uid).replace(/ \(you\)$/, "") + (me ? " — your days" : "'s days")); h.id = "sh-title"; body.appendChild(h);
-  body.appendChild(el("p","sh-help","Tap any day to mark it done or not done: past, today or ahead. It saves straight away"
-    + (me ? "." : ", and " + nameOf(uid) + " sees it live.")));
+  body.appendChild(el("p","sh-help", me
+    ? "Your own days: tick today or any day already gone. Days ahead stay locked, like everyone's."
+    : "Tap any day to mark it done or not done: past, today or ahead. It saves straight away, and " + nameOf(uid) + " sees it live."));
   var g = el("div","dgrid");
   for (var d = 1; d <= 60; d++) (function(day){
-    var on = !!p.done[day], pr = S.proofs[proofId(uid, day)];
+    var on = !!p.done[day], pr = S.proofs[proofId(uid, day)], shut = me && !on && (ti === null || day > ti);
     var c = el("button", "dcell " + PLAN[day-1].type + (on ? " on" : "") + (ti === day ? " today" : "") + (ti !== null && day > ti ? " ahead" : "")
+      + (shut ? " shut" : "")
       + (pr && pr.status === "pending" ? " pend" : pr && pr.status === "rejected" ? " rej" : ""), String(day));
     c.type = "button"; c.setAttribute("aria-pressed", on ? "true" : "false");
     c.setAttribute("aria-label", "Day " + day + (on ? ", done" : ", not done") + (pr && pr.status === "pending" ? ", proof waiting" : ""));
+    if (shut){ c.disabled = true; c.title = "Your own days open one at a time"; }
     c.addEventListener("click", function(){ coachSetDay(uid, day, !on); });
     g.appendChild(c);
   })(d);
@@ -2090,7 +2137,7 @@ function drawDays(body){
 }
 function coachSetDay(uid, day, on){
   if (!S.owner || !DB) return;
-  if (isMe(uid)){ if (!!S.me.done[day] !== on) toggle(day); return; }
+  if (isMe(uid)){ if (!!S.me.done[day] !== on && (!on || ownDayOpen(day))) toggle(day); return; }
   var had = uid in S.people, p = S.people[uid] || { done:{}, start:"" }, prevDone = p.done, now = Date.now();
   var done = Object.assign({}, p.done); if (on) done[day] = true; else delete done[day];
   p.done = done; S.people[uid] = p;
@@ -2164,7 +2211,7 @@ window.addEventListener("cb-members", function(e){
 });
 /* "Today" changes at midnight even if nobody touches the page. */
 (function midnight(){
-  var n = new Date(), next = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 0, 0, 5);
+  var n = new Date(realNow()), next = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 0, 0, 5);
   setTimeout(function(){ render(); midnight(); }, next - n);
 })();
 
