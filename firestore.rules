@@ -4,8 +4,13 @@ rules_version = '2';
    ---------------------------------
    members/{uid}   the join request + its status (pending | approved | denied)
    names/{uid}     display name only, so the board can label other athletes
-   progress/{uid}  one athlete's ticked days; they alone may write it
+   progress/{uid}  one athlete's approved days + start date
    progress/_levels  Beginner/Advanced assignments; the owner alone may write it
+   proofs/{uid_day}       a proof's status: pending | approved | rejected
+   proofImages/{uid_day}  the photo itself, kept apart so lists stay light
+
+   Days are marked done by the owner (the coach) only - by approving a proof
+   photo, or by ticking a day directly. An athlete can never write "done".
 
    Change owners() below to the email(s) that may approve athletes and assign
    levels, in lowercase. It must match CONFIG.ownerEmails in
@@ -26,6 +31,10 @@ service cloud.firestore {
       /* Google hands us the address lowercased; owners() is lowercase too, so
          the config is forgiving of however the address was typed.            */
       return signedIn() && request.auth.token.email.lower() in owners();
+    }
+
+    function proofId(uid, day) {
+      return uid + '_' + string(day);
     }
 
     function approved() {
@@ -64,16 +73,61 @@ service cloud.firestore {
     match /progress/{docId} {
       allow read: if isOwner() || approved();
 
-      /* An approved athlete writes only their own day-ticks. request.resource
-         is null on a delete, so this rule covers creates and updates only -
-         an athlete cannot delete their own record.                          */
-      allow write: if approved()
+      /* An athlete creates their own record on first visit, with no days. */
+      allow create: if approved()
         && request.auth.uid == docId
-        && request.resource != null
-        && request.resource.data.keys().hasOnly(['done', 'start', 'updated']);
+        && request.resource.data.keys().hasOnly(['done', 'start', 'updated'])
+        && request.resource.data.get('done', {}).size() == 0;
 
-      /* The owner writes progress/_levels (the plan assignments), and deletes
-         an athlete's ticks when taking them off the challenge.              */
+      /* After that they may set their start date - once, while it's empty.
+         Their days are untouchable: only the coach marks a day done.        */
+      allow update: if approved()
+        && request.auth.uid == docId
+        && request.resource.data.keys().hasOnly(['done', 'start', 'updated'])
+        && request.resource.data.get('done', {}) == resource.data.get('done', {})
+        && (request.resource.data.get('start', '') == resource.data.get('start', '')
+            || resource.data.get('start', '') == '');
+
+      /* The owner writes anyone's days and start date, progress/_levels, and
+         deletes an athlete's record when taking them off the challenge.     */
+      allow write: if isOwner();
+    }
+
+    /* --- proof of a day's workout ----------------------------------------- */
+    match /proofs/{id} {
+      /* Only the athlete who sent it, and the coach. Never teammates. */
+      allow read: if isOwner() || (signedIn() && resource.data.uid == request.auth.uid);
+
+      /* An athlete sends - or after a rejection, resends - proof for one of
+         their own days. Always as "pending"; never over an approved one.    */
+      allow create, update: if approved()
+        && request.resource.data.keys().hasOnly(['uid', 'day', 'status', 'note', 'submittedAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.day is int
+        && request.resource.data.day >= 1 && request.resource.data.day <= 60
+        && id == proofId(request.auth.uid, request.resource.data.day)
+        && request.resource.data.status == 'pending'
+        && request.resource.data.get('note', '') is string
+        && request.resource.data.get('note', '').size() <= 280
+        && (resource == null || resource.data.status != 'approved');
+
+      /* The coach approves, rejects (with a reason) and deletes. */
+      allow write: if isOwner();
+    }
+
+    match /proofImages/{id} {
+      allow read: if isOwner() || (signedIn() && resource.data.uid == request.auth.uid);
+
+      allow create, update: if approved()
+        && request.resource.data.keys().hasOnly(['uid', 'day', 'image'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.day is int
+        && id == proofId(request.auth.uid, request.resource.data.day)
+        && request.resource.data.image is string
+        && request.resource.data.image.size() < 1000000
+        && !(exists(/databases/$(database)/documents/proofs/$(id))
+             && get(/databases/$(database)/documents/proofs/$(id)).data.status == 'approved');
+
       allow write: if isOwner();
     }
 

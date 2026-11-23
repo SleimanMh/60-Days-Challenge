@@ -611,6 +611,115 @@ body::after{content:"";position:fixed;inset:0;z-index:60;pointer-events:none;opa
   font:inherit;font-size:14px;letter-spacing:0;text-transform:none;color:var(--bone);transition:border-color .3s,box-shadow .3s}
 .a-start input.saved{border-color:var(--hike);box-shadow:0 0 0 3px rgba(134,179,111,.22)}
 .a-start input[disabled]{opacity:.5}
+/* ---- proof of work: sheets, tile states, review ---- */
+.toast.good{border-color:rgba(134,179,111,.6)}
+.toast.bad{border-color:rgba(227,38,28,.6)}
+.btn svg{width:20px;height:20px;fill:currentColor;vertical-align:-4px;margin-right:9px}
+.btn.pending{background:transparent;color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold);background-image:repeating-linear-gradient(135deg,rgba(246,185,18,.08) 0 8px,transparent 8px 16px)}
+.btn.locked{background:var(--panel-2);color:var(--muted);box-shadow:inset 0 0 0 1px var(--line)}
+.start-lock{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.start{flex-wrap:wrap}
+
+.t-badge{position:absolute;right:10px;bottom:10px;width:26px;height:26px;border-radius:50%;display:none;place-items:center;z-index:1}
+.t-badge svg{width:14px;height:14px}
+.tile.is-pending,.tile.is-rejected,.tile.is-locked{}
+.tile.is-pending{border-style:dashed;border-color:rgba(246,185,18,.75);
+  background:linear-gradient(160deg,rgba(246,185,18,.08),transparent 60%),var(--panel)}
+.tile.is-pending .t-badge{display:grid;background:rgba(246,185,18,.18);color:var(--gold);animation:waitPulse 2.2s ease-in-out infinite}
+.tile.is-rejected{border-color:rgba(227,38,28,.6)}
+.tile.is-rejected .t-badge{display:grid;background:var(--red);color:#fff}
+.tile.is-locked{cursor:not-allowed}
+.tile.is-locked .t-badge{display:grid;background:var(--panel-2);color:#77736b}
+.tile.is-locked:hover{translate:none;box-shadow:none}
+.tile.is-pending .t-foot,.tile.is-rejected .t-foot,.tile.is-locked .t-foot{padding-right:32px}
+@keyframes waitPulse{50%{box-shadow:0 0 0 5px rgba(246,185,18,.12)}}
+
+.sheet-bg{position:fixed;inset:0;z-index:95;display:grid;place-items:end center;background:rgba(5,5,6,.74);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:fadeIn .25s ease-out both}
+.sheet-bg.out{animation:fadeOut .2s ease-in forwards}
+.sheet{position:relative;width:min(480px,100%);max-height:92vh;overflow:auto;display:grid;gap:12px;
+  background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;
+  padding:22px 20px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -20px 60px -20px rgba(0,0,0,.95);
+  animation:sheetUp .45s var(--ease-out) both}
+.sheet.wide{width:min(620px,100%)}
+@keyframes sheetUp{from{transform:translateY(46px);opacity:0}}
+@media (min-width:640px){.sheet-bg{place-items:center;padding:20px}.sheet{border-radius:18px;padding-bottom:22px}}
+.sheet h3{margin:0;font-family:var(--display);font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:24px;line-height:1.05;padding-right:40px}
+.sh-eyebrow{font-family:var(--display);font-weight:700;letter-spacing:.22em;text-transform:uppercase;font-size:12px;color:var(--muted)}
+.sh-task{margin:0;font-family:var(--display);font-weight:700;font-size:18px;color:var(--gold)}
+.sh-help{margin:0;font-size:14px;color:var(--muted)}
+.sh-x{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;border:0;cursor:pointer;
+  background:var(--panel-2);color:var(--bone);font-size:22px;line-height:1}
+.sh-banner{padding:10px 12px;border-radius:10px;font-size:14px;line-height:1.4}
+.sh-banner.wait{background:rgba(246,185,18,.09);border:1px solid rgba(246,185,18,.35)}
+.sh-banner.no{background:rgba(227,38,28,.1);border:1px solid rgba(227,38,28,.45)}
+.sh-drop{position:relative;display:grid;place-items:center;gap:6px;text-align:center;padding:26px 16px;cursor:pointer;
+  border:2px dashed #3a3a40;border-radius:14px;color:var(--muted);transition:border-color .2s,background .2s,color .2s}
+.sh-drop:hover,.sh-drop:focus-within{border-color:var(--gold);background:rgba(246,185,18,.05);color:var(--bone)}
+.sh-drop svg{width:36px;height:36px;fill:var(--gold)}
+.sh-drop b{color:var(--bone);font-family:var(--display);font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:17px}
+.sh-drop small{font-size:13px;max-width:300px}
+.sh-file{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+.sh-drop[hidden],.sh-prev[hidden]{display:none}
+.sh-prev{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#000}
+.sh-prev img{display:block;width:100%;max-height:46vh;object-fit:contain}
+.sh-tag{position:absolute;left:10px;top:10px;padding:3px 9px;border-radius:999px;background:rgba(11,11,12,.78);
+  font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.sh-change{position:absolute;right:10px;bottom:10px;border:0;cursor:pointer;border-radius:999px;padding:7px 14px;
+  background:rgba(11,11,12,.82);color:var(--bone);font-weight:700;font-size:13px}
+.sheet textarea{width:100%;min-height:62px;resize:vertical;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+  padding:10px 12px;color:var(--bone);font:inherit;font-size:15px}
+.sh-err{margin:0;color:#ff6b61;font-size:14px}
+.sh-fine{margin:0;font-size:12.5px;color:var(--muted);text-align:center}
+.sheet .btn{width:100%;display:inline-flex;align-items:center;justify-content:center}
+
+.dgrid{display:grid;grid-template-columns:repeat(10,1fr);gap:6px}
+.dcell{position:relative;aspect-ratio:1;border-radius:8px;border:1px solid var(--line);background:var(--panel-2);color:var(--bone);
+  font-family:var(--display);font-weight:800;font-size:14px;cursor:pointer;padding:0;transition:transform .12s,background .15s}
+.dcell:active{transform:scale(.92)}
+.dcell::before{content:"";position:absolute;left:3px;right:3px;bottom:3px;height:2px;border-radius:2px;background:var(--gold);opacity:.55}
+.dcell.push::before{background:var(--bone)}
+.dcell.hike::before{background:var(--hike)}
+.dcell.ahead{color:var(--muted)}
+.dcell.on{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+.dcell.on::before{opacity:0}
+.dcell.today{box-shadow:0 0 0 2px var(--red)}
+.dcell.pend::after,.dcell.rej::after{content:"";position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:var(--gold)}
+.dcell.rej::after{background:var(--red)}
+.dcell.on.pend::after{background:var(--ink)}
+.dlegend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted)}
+.dlegend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+@media (max-width:440px){.dgrid{grid-template-columns:repeat(6,1fr)}}
+
+.a-days{border:0;cursor:pointer;border-radius:10px;padding:9px 14px;font-family:var(--display);font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;font-size:13px;background:transparent;color:var(--bone);box-shadow:inset 0 0 0 1px #3a3a40}
+.a-days:hover{box-shadow:inset 0 0 0 1px var(--gold);color:var(--gold)}
+.ci-state.sent{color:var(--gold)}
+
+.rv{display:grid;grid-template-columns:128px 1fr;gap:14px;padding:14px 0;border-top:1px solid var(--line)}
+.rv-img{position:relative;width:128px;height:128px;border-radius:12px;overflow:hidden;border:1px solid var(--line);
+  background:var(--panel-2);padding:0;cursor:zoom-in;color:var(--muted);font-size:12px}
+.rv-img img{width:100%;height:100%;object-fit:cover;display:block}
+.rv-img.loading::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);
+  background-size:200% 100%;animation:shimmer 1.2s linear infinite}
+.rv-body{display:grid;gap:9px;align-content:start;min-width:0}
+.rv-who{display:flex;align-items:center;gap:10px;font-weight:700}
+.rv-who small{display:block;font-weight:500;color:var(--muted);font-size:12.5px}
+.rv-note{margin:0;font-size:14px;font-style:italic;overflow-wrap:anywhere}
+.rv-act{display:flex;gap:8px;flex-wrap:wrap}
+.rv-act button{border:0;cursor:pointer;border-radius:10px;padding:10px 16px;font-family:var(--display);font-weight:800;
+  letter-spacing:.1em;text-transform:uppercase;font-size:14px}
+.rv-yes{background:var(--gold);color:var(--ink)}
+.rv-no{background:transparent;color:#ff6b61;box-shadow:inset 0 0 0 1px rgba(227,38,28,.6)}
+.rv-why button{background:var(--panel-2);color:var(--bone);box-shadow:inset 0 0 0 1px var(--line);text-transform:none;letter-spacing:0;
+  font-family:var(--body);font-weight:600;font-size:13px;padding:8px 12px}
+.rv-why .rv-cancel{background:transparent;box-shadow:none;color:var(--muted);text-decoration:underline}
+.rv-act button[disabled]{opacity:.5;cursor:progress}
+@media (max-width:440px){.rv{grid-template-columns:94px 1fr;gap:12px}.rv-img{width:94px;height:94px}}
+
+.lightbox{position:fixed;inset:0;z-index:97;display:grid;place-items:center;padding:16px;cursor:zoom-out;
+  background:rgba(0,0,0,.93);animation:fadeIn .2s ease-out both}
+.lightbox img{max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.8)}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;animation-delay:0ms!important;transition:none!important}
   .js .reveal{opacity:1;translate:none}
@@ -658,6 +767,7 @@ body::after{content:"";position:fixed;inset:0;z-index:60;pointer-events:none;opa
   <p class="note" id="note" hidden></p>
 
   <section class="sec" id="admin-sec" hidden>
+    <div class="admin" id="review"></div>
     <div class="admin" id="checkin"></div>
     <div class="admin" id="admin"></div>
   </section>
@@ -803,7 +913,8 @@ function secs(n){ return n < 60 ? n+"s" : Math.floor(n/60)+":"+String(n%60).padS
 
 /* ---------- state ---------- */
 var S = { uid:null, me:{done:{},start:""}, people:{}, names:{}, levels:{}, mode:"loading", owner:false, view:null,
-          members:null /* approved athletes, from the sign-in layer; coach only */, mnames:{} };
+          members:null /* approved athletes, from the sign-in layer; coach only */, mnames:{},
+          proofs:{} /* uid_day -> proof status: an athlete's own, or every one for the coach */, hadDoc:false };
 var DB = null, dbRef = null, userApi = null;
 
 function clean(data){
@@ -938,11 +1049,24 @@ function renderMission(){
     var task = el("div","m-task",d.big); task.appendChild(el("small",null,d.sub)); box.appendChild(task);
     if (d.set) box.appendChild(milSet());
     var row = el("div","m-row");
-    var done = !!S.me.done[day];
-    var b = el("button","btn"+(done?" done":""), done ? "Day "+day+" done ✓" : "Mark day "+day+" done");
+    var done = !!S.me.done[day], b;
+    if (!athlete()){
+      /* the coach ticks his own days directly */
+      b = el("button","btn"+(done?" done":""), done ? "Day "+day+" done ✓" : "Mark day "+day+" done");
+    } else {
+      var pr = proofOf(S.uid, day), cls = "btn", lbl, cam = false;
+      if (done){ cls += " done"; lbl = "Day " + day + " approved ✓"; }
+      else if (pr && pr.status === "pending"){ cls += " pending"; lbl = "Waiting for " + COACH; }
+      else if (ti === null){ cls += " locked"; lbl = "Set your start date to begin"; }
+      else if (day > ti){ cls += " locked"; lbl = "Day " + day + " opens " + dateFor(S.me.start, day); }
+      else { cam = true; lbl = (pr && pr.status === "rejected" ? "Resend" : "Send") + " day " + day + " proof"; }
+      b = el("button", cls);
+      if (cam) b.innerHTML = IC.camera;
+      b.appendChild(document.createTextNode(lbl));
+    }
     b.type = "button";
     if (S.mode==="readonly") b.disabled = true;
-    b.addEventListener("click", function(e){ var on = !S.me.done[day]; toggle(day); if (on) chalkAt(e, b); });
+    b.addEventListener("click", function(e){ tapDay(day, e, b); });
     if (done) shot(b, "done:" + day, "just", 900);
     row.appendChild(b);
     row.appendChild(metaOf(st, sk));
@@ -952,8 +1076,20 @@ function renderMission(){
   l2.appendChild(el("span",null,"Your start date"));
   var inp = el("input"); inp.type = "date"; inp.id = "start-date"; inp.value = S.me.start || "";
   if (S.mode==="readonly") inp.disabled = true;
-  inp.addEventListener("change", function(){ S.me.start = /^\d{4}-\d{2}-\d{2}$/.test(inp.value) ? inp.value : ""; save(); render(); });
+  /* An athlete sets their start date once; after that only the coach moves it,
+     or "today" could be slid around to open up locked days. */
+  var lockedStart = athlete() && !!S.me.start;
+  if (lockedStart){ inp.disabled = true; l2.title = "Ask " + COACH + " to change your start date"; }
+  inp.addEventListener("change", function(){
+    var v = /^\d{4}-\d{2}-\d{2}$/.test(inp.value) ? inp.value : "";
+    if (v === (S.me.start || "")) return;            /* nothing changed: no write, no second prompt */
+    if (athlete() && v && !window.confirm("Start your 60 days on " + dateFor(v, 1) + "?\n\nYou can't change this yourself afterwards. Only " + COACH + " can.")){
+      inp.value = S.me.start || ""; return;
+    }
+    S.me.start = v; save(); render();
+  });
   l2.appendChild(inp);
+  if (lockedStart) l2.appendChild(el("small","start-lock","Locked. Ask " + COACH + " to change it."));
   box.appendChild(l2);
 }
 
@@ -1083,7 +1219,7 @@ function todayOf(p){
    under the coach: hold the rebuild until they leave the field. */
 function editing(box){
   var a = document.activeElement;
-  return !!(a && box.contains(a) && a.tagName === "INPUT");
+  return !!(a && box.contains(a) && (a.tagName === "INPUT" || a.tagName === "TEXTAREA"));
 }
 
 function renderCheckin(box){
@@ -1092,13 +1228,16 @@ function renderCheckin(box){
   var todo = [], done = [], other = [];
   roster().forEach(function(r){
     r.t = todayOf(r.p);
+    if (r.t.k === "todo"){ var pr = proofOf(r.id, r.t.day); r.sent = !!(pr && pr.status === "pending"); }
     (r.t.k === "todo" ? todo : r.t.k === "done" ? done : other).push(r);
   });
-  todo.sort(function(a, b){ return b.t.missed - a.t.missed; });
+  /* still owing first (most missed first); proof already sent goes last */
+  todo.sort(function(a, b){ return (a.sent - b.sent) || (b.t.missed - a.t.missed); });
+  var owing = todo.filter(function(r){ return !r.sent; });
 
   var h = el("h3", null, "Today's check-in");
-  h.appendChild(el("span", "lvl " + (todo.length ? "adv" : done.length ? "ok" : "none"),
-    todo.length ? todo.length + " still to go" : done.length ? "Everyone's in" : "Nobody due today"));
+  h.appendChild(el("span", "lvl " + (owing.length ? "adv" : todo.length || done.length ? "ok" : "none"),
+    owing.length ? owing.length + " still to go" : todo.length ? "Proof to review" : done.length ? "Everyone's in" : "Nobody due today"));
   box.appendChild(h);
   var p = el("p");
   p.appendChild(el("span", "ci-date", new Date().toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long" })));
@@ -1114,15 +1253,15 @@ function renderCheckin(box){
     if (r.t.missed) nm.appendChild(el("span", "ci-miss", r.t.missed + " missed"));
     nm.appendChild(el("span", "ci-what", "Day " + r.t.day + " · " + describe(PLAN[r.t.day - 1], lvl(r.id)).big));
     who.appendChild(nm); row.appendChild(who);
-    row.appendChild(el("span", "ci-state", "Not yet"));
+    row.appendChild(el("span", "ci-state" + (r.sent ? " sent" : ""), r.sent ? "Proof sent" : "Not yet"));
     box.appendChild(row);
   });
 
-  if (todo.length){
+  if (owing.length){
     var cp = el("button", "ci-copy", "Copy reminder for the group"); cp.type = "button";
     cp.title = "Copies a message you can paste into your group chat";
     cp.addEventListener("click", function(){
-      var msg = "60 Days Challenge — still to check in today:\n" + todo.map(function(r){
+      var msg = "60 Days Challenge — still to check in today:\n" + owing.map(function(r){
         return "• " + nameOf(r.id).replace(/ \(you\)$/, "") + " — Day " + r.t.day + ": " + describe(PLAN[r.t.day - 1], lvl(r.id)).big;
       }).join("\n") + "\nNo excuses.";
       copyText(msg).then(function(){ cp.textContent = "Copied — paste it in the chat"; cp.classList.add("copied"); },
@@ -1201,6 +1340,7 @@ function setStart(id, v){
 function renderAdmin(){
   var sec = document.getElementById("admin-sec"), box = document.getElementById("admin");
   sec.hidden = !S.owner; if (!S.owner) return;
+  renderReview(document.getElementById("review"));
   renderCheckin(document.getElementById("checkin"));
   if (editing(box)) return;
   box.textContent = "";
@@ -1234,7 +1374,12 @@ function renderAdmin(){
       bt.addEventListener("click", function(){ assign(id, o[0]); });
       tabs.appendChild(bt);
     });
-    ctrl.appendChild(tabs); row.appendChild(ctrl);
+    ctrl.appendChild(tabs);
+    var days = el("button","a-days","Days"); days.type = "button";
+    days.setAttribute("aria-label", "Tick or untick " + nameOf(id) + "'s days");
+    days.addEventListener("click", function(){ openDays(id); });
+    ctrl.appendChild(days);
+    row.appendChild(ctrl);
     box.appendChild(row);
   });
 }
@@ -1262,9 +1407,13 @@ function renderRules(level){
 }
 
 function tile(p, level, mineLevel){
-  var mine = !!S.me.done[p.day], ti = todayIndex(S.me.start);
+  var mine = !!S.me.done[p.day], ti = todayIndex(S.me.start), ath = athlete();
+  var pr = ath && !mine ? proofOf(S.uid, p.day) : null;
+  var pending = !!(pr && pr.status === "pending"), rejected = !!(pr && pr.status === "rejected");
+  var locked = ath && !mine && (ti === null || p.day > ti);
   var t = el("button","tile "+p.type+(mine?" is-done":"")+(ti===p.day?" is-today":"")
-    +(ti!==null && p.day<ti && !mine ? " is-missed" : "")+(ti!==null && p.day>ti ? " is-future" : ""));
+    +(ti!==null && p.day<ti && !mine && !pending ? " is-missed" : "")+(ti!==null && p.day>ti ? " is-future" : "")
+    +(pending ? " is-pending" : "")+(rejected ? " is-rejected" : "")+(locked ? " is-locked" : ""));
   t.type = "button"; t.setAttribute("aria-pressed", mine ? "true" : "false");
   t.style.setProperty("--i", p.day - 1);
   if (S.mode==="readonly") t.disabled = true;
@@ -1295,6 +1444,10 @@ function tile(p, level, mineLevel){
   t.appendChild(foot);
   var ck = el("span","t-check"); ck.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   t.appendChild(ck);
+  if (pending || rejected || locked){
+    var bd = el("span","t-badge"); bd.innerHTML = pending ? IC.wait : rejected ? IC.bang : IC.lock; t.appendChild(bd);
+  }
+  if (rejected && pr.reason) t.title = COACH + ": " + pr.reason;
   if (mine && shot(t, "done:" + p.day, "just-done", 1700)){
     var stamp = el("span","t-stamp","Done!"); stamp.setAttribute("aria-hidden","true");
     stamp.style.setProperty("--t", t.style.getPropertyValue("--t"));
@@ -1302,8 +1455,9 @@ function tile(p, level, mineLevel){
     t.appendChild(stamp);
   }
   t.setAttribute("aria-label","Day "+p.day+": "+describe(p, level).big+(mine?", done":", not done")
-    +(ti!==null && p.day<ti && !mine ? ", missed" : ""));
-  t.addEventListener("click", function(e){ var on = !S.me.done[p.day]; toggle(p.day); if (on) chalkAt(e, t); });
+    +(pending ? ", proof waiting for approval" : rejected ? ", proof not approved" : locked ? ", locked" : "")
+    +(ti!==null && p.day<ti && !mine && !pending ? ", missed" : ""));
+  t.addEventListener("click", function(e){ tapDay(p.day, e, t); });
   return t;
 }
 
@@ -1312,7 +1466,8 @@ function renderGrid(){
   document.getElementById("tab-adv").setAttribute("aria-pressed", level==="adv" ? "true" : "false");
   document.getElementById("tab-beg").setAttribute("aria-pressed", level==="beg" ? "true" : "false");
   document.getElementById("plan-hint").textContent = level === mineLevel
-    ? "Your plan. Tap a day to mark it done. Others' check-ins show as initials."
+    ? (athlete() ? "Your plan. Tap today or a past day to send proof; " + COACH + " approves it. Others' check-ins show as initials."
+                 : "Your plan. Tap a day to mark it done. Others' check-ins show as initials.")
     : "You're viewing the " + (level==="adv"?"Advanced":"Beginner") + " plan. Ticks still count for your own " + (mineLevel==="adv"?"Advanced":"Beginner") + " plan.";
   var pt = document.getElementById("plan-tabs"); if (pt) pt.setAttribute("data-active", level);
   renderRules(level);
@@ -1333,7 +1488,10 @@ function renderGrid(){
   });
 }
 
-function render(){ renderStatus(); renderMission(); renderAdmin(); renderBoard(); renderGrid(); }
+function render(){
+  renderStatus(); renderMission(); renderAdmin(); renderBoard(); renderGrid();
+  if (sheetEl && DAYS_FOR){ var db_ = sheetEl.querySelector(".days-body"); if (db_) drawDays(db_); }
+}
 
 var swapTimer = null;
 function switchPlan(level){
@@ -1609,6 +1767,7 @@ var phasesIn = 0;
 
 /* ---------- saving ---------- */
 var writing = false, dirty = false;
+/* The coach ticks his own days directly. Athletes never write "done". */
 function toggle(day){
   if (S.mode==="readonly") return;
   var on = !S.me.done[day];
@@ -1627,9 +1786,19 @@ function save(){
   writing = true;
   (function loop(){
     dirty = false;
-    var body = {done:{}, start:S.me.start || "", updated:Date.now()};
-    Object.keys(S.me.done).forEach(function(k){ body.done[k] = true; });
-    dbRef.set(body).then(function(){
+    var w, now = Date.now();
+    if (!athlete()){
+      var body = {done:{}, start:S.me.start || "", updated:now};
+      Object.keys(S.me.done).forEach(function(k){ body.done[k] = true; });
+      w = dbRef.set(body);
+    } else if (!S.hadDoc){
+      w = dbRef.set({done:{}, start:S.me.start || "", updated:now});        /* first visit */
+    } else {
+      w = dbRef.update ? dbRef.update({start:S.me.start || "", updated:now})  /* only ever the start date */
+                       : dbRef.set({done:S.me.done, start:S.me.start || "", updated:now});
+    }
+    Promise.resolve(w).then(function(){
+      S.hadDoc = true;
       if (S.mode==="error"){ S.mode = "live"; renderStatus(); }
       if (dirty) loop(); else writing = false;
     }, function(e){
@@ -1639,6 +1808,337 @@ function save(){
     });
   })();
 }
+
+/* ---------- proof of work ----------
+   An athlete's day is done only when the coach approves a photo of it.
+   Photos are shrunk on the phone and stored apart from the progress records,
+   so the live board stays light; they're fetched only to look at them.    */
+var IC = {
+  camera: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M9 4.5h6l1.6 2.2H20a1.8 1.8 0 0 1 1.8 1.8v9.7A1.8 1.8 0 0 1 20 20H4a1.8 1.8 0 0 1-1.8-1.8V8.5A1.8 1.8 0 0 1 4 6.7h3.4zM12 9a4.2 4.2 0 1 0 0 8.4A4.2 4.2 0 0 0 12 9zm0 2a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4z"/></svg>',
+  wait: '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 1.5h8M3 12.5h8M4 1.5c0 3 3 3.6 3 5.5S4 9.5 4 12.5M10 1.5c0 3-3 3.6-3 5.5s3 2.5 3 5.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+  lock: '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M4.2 6V4.4a2.8 2.8 0 0 1 5.6 0V6" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="2.6" y="6" width="8.8" height="6.4" rx="1.6" fill="currentColor"/></svg>',
+  bang: '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M7 2.8v5.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="7" cy="11" r="1.3" fill="currentColor"/></svg>'
+};
+function athlete(){ return !!S.uid && !S.owner; }
+function proofId(uid, day){ return uid + "_" + day; }
+function proofOf(uid, day){ return S.proofs[proofId(uid, day)] || null; }
+function ago(ms){
+  var sec = (Date.now() - (ms || 0)) / 1000;
+  if (!ms || sec < 60) return "just now";
+  if (sec < 3600) return Math.round(sec / 60) + " min ago";
+  if (sec < 86400) return Math.round(sec / 3600) + " h ago";
+  var d = Math.round(sec / 86400); return d + (d === 1 ? " day ago" : " days ago");
+}
+function say(msg, kind){
+  var box = document.getElementById("toasts"); if (!box) return;
+  var t = el("div","toast" + (kind ? " " + kind : "")); t.appendChild(el("span",null,msg)); box.appendChild(t);
+  while (box.children.length > 3) box.removeChild(box.firstChild);
+  setTimeout(function(){ t.classList.add("out"); setTimeout(function(){ if (t.parentNode) t.parentNode.removeChild(t); }, 400); }, 4500);
+}
+
+function tapDay(day, e, from){
+  if (S.mode === "readonly") return;
+  if (!athlete()){ var on = !S.me.done[day]; toggle(day); if (on) chalkAt(e, from); return; }
+  if (S.me.done[day]){ say("Day " + day + " is approved. Nice work.", "good"); return; }
+  var ti = todayIndex(S.me.start);
+  if (ti === null){
+    say("Set your start date first, then send proof for each day.");
+    var sd = document.getElementById("start-date"); if (sd && !sd.disabled) sd.focus();
+    return;
+  }
+  if (day > ti){ say("Day " + day + " opens on " + dateFor(S.me.start, day) + ". You can send proof for today and days already gone."); return; }
+  openProof(day);
+}
+
+/* Phone photos are 3-5 MB; shrink to ~1280px JPEG, stepping down until it fits. */
+function shrink(file){
+  return new Promise(function(ok, no){
+    if (!file || (file.type && !/^image\//.test(file.type))) return no(new Error("That isn't a photo. Choose an image."));
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function(){
+      URL.revokeObjectURL(url);
+      var W = img.naturalWidth, H = img.naturalHeight, out = null;
+      [[1280, .74], [1080, .66], [860, .6], [640, .55]].some(function(step){
+        var k = Math.min(1, step[0] / Math.max(W, H)), cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(W * k)); cv.height = Math.max(1, Math.round(H * k));
+        var cx = cv.getContext("2d"); cx.fillStyle = "#000"; cx.fillRect(0, 0, cv.width, cv.height);
+        cx.drawImage(img, 0, 0, cv.width, cv.height);
+        out = cv.toDataURL("image/jpeg", step[1]);
+        return out.length < 700000;
+      });
+      out && out.length < 990000 ? ok(out) : no(new Error("That photo is too large, even shrunk. Try another one."));
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); no(new Error("Couldn't read that photo. Try a different one, or a screenshot of it.")); };
+    img.src = url;
+  });
+}
+
+var IMG = {}, IMGP = {};
+function imgKey(id){ var pr = S.proofs[id]; return id + ":" + (pr ? pr.submittedAt : 0); }
+function fetchProofImage(id){
+  var key = imgKey(id);
+  if (IMGP[key]) return IMGP[key];
+  if (!DB) return Promise.resolve(null);
+  IMGP[key] = Promise.resolve(DB.doc("proofImages/" + id).get()).then(function(snap){
+    var src = snap && snap.exists && (snap.data() || {}).image;
+    IMG[key] = typeof src === "string" && /^data:image\/(jpeg|png|webp);base64,/.test(src) ? src : "error";
+    return IMG[key] === "error" ? null : IMG[key];
+  }, function(){ IMG[key] = "error"; return null; });
+  return IMGP[key];
+}
+
+function submitProof(day, image, note){
+  var id = proofId(S.uid, day), now = Date.now();
+  /* the photo first, so the coach never sees a proof without its picture */
+  return Promise.resolve(DB.doc("proofImages/" + id).set({ uid: S.uid, day: day, image: image }))
+    .then(function(){ return DB.doc("proofs/" + id).set({ uid: S.uid, day: day, status: "pending", note: note, submittedAt: now }); })
+    .then(function(){
+      S.proofs[id] = { uid: S.uid, day: day, status: "pending", note: note, reason: "", submittedAt: now };
+      IMG[imgKey(id)] = image; IMGP[imgKey(id)] = Promise.resolve(image);
+      render();
+    });
+}
+
+var sheetEl = null, sheetBack = null, DAYS_FOR = null;
+function sheetKey(e){ if (e.key === "Escape") closeSheet(); }
+function closeSheet(){
+  if (!sheetEl) return;
+  var bg = sheetEl; sheetEl = null; DAYS_FOR = null;
+  bg.classList.add("out"); setTimeout(function(){ if (bg.parentNode) bg.parentNode.removeChild(bg); }, 220);
+  document.removeEventListener("keydown", sheetKey);
+  if (sheetBack && sheetBack.focus && document.contains(sheetBack)) sheetBack.focus();
+}
+function openSheet(build, wide){
+  closeSheet();
+  sheetBack = document.activeElement;
+  var bg = el("div","sheet-bg"), sh = el("div","sheet" + (wide ? " wide" : ""));
+  sh.setAttribute("role","dialog"); sh.setAttribute("aria-modal","true"); sh.setAttribute("aria-labelledby","sh-title");
+  var x = el("button","sh-x","×"); x.type = "button"; x.setAttribute("aria-label","Close"); x.addEventListener("click", closeSheet);
+  sh.appendChild(x); bg.appendChild(sh);
+  bg.addEventListener("click", function(e){ if (e.target === bg) closeSheet(); });
+  document.addEventListener("keydown", sheetKey);
+  document.body.appendChild(bg); sheetEl = bg;
+  build(sh);
+  return sh;
+}
+
+function openProof(day){
+  var lv = lvl(S.uid || "_me"), pr = proofOf(S.uid, day), data = null;
+  openSheet(function(sh){
+    sh.appendChild(el("div","sh-eyebrow","Day " + day + " · " + dateFor(S.me.start, day)));
+    var h = el("h3",null,"Send your proof"); h.id = "sh-title"; sh.appendChild(h);
+    sh.appendChild(el("p","sh-task", describe(PLAN[day-1], lv).big));
+    if (pr && pr.status === "pending")
+      sh.appendChild(el("div","sh-banner wait","Sent " + ago(pr.submittedAt) + ", waiting for " + COACH + ". A new photo replaces it."));
+    if (pr && pr.status === "rejected")
+      sh.appendChild(el("div","sh-banner no", COACH + " didn't approve this" + (pr.reason ? ": “" + pr.reason + "”" : "") + ". Send a new photo."));
+    var drop = el("label","sh-drop"), file = el("input");
+    file.type = "file"; file.accept = "image/*"; file.className = "sh-file";
+    drop.innerHTML = IC.camera;
+    drop.appendChild(el("b",null,"Take or choose a photo"));
+    drop.appendChild(el("small",null,"Your run app, the trail, you mid-plank: anything that shows today's work."));
+    drop.appendChild(file);
+    var prev = el("div","sh-prev"), pimg = el("img"), tag = el("span","sh-tag","New photo"), change = el("button","sh-change","Change photo");
+    prev.hidden = true; pimg.alt = "Your proof photo"; change.type = "button";
+    change.addEventListener("click", function(){ file.click(); });
+    prev.appendChild(pimg); prev.appendChild(tag); prev.appendChild(change);
+    sh.appendChild(drop); sh.appendChild(prev);
+    var note = el("textarea"); note.maxLength = 280; note.rows = 2; note.placeholder = "A note for " + COACH + " (optional)";
+    note.setAttribute("aria-label","Note for " + COACH);
+    if (pr && pr.status === "pending") note.value = pr.note || "";
+    sh.appendChild(note);
+    var err = el("p","sh-err"); err.hidden = true; err.setAttribute("role","alert"); sh.appendChild(err);
+    var send = el("button","btn sh-send"), label = el("span",null,"Send to " + COACH);
+    send.type = "button"; send.innerHTML = IC.camera; send.appendChild(label); send.disabled = true;
+    sh.appendChild(send);
+    sh.appendChild(el("p","sh-fine","Only you and " + COACH + " can see this photo."));
+
+    function show(src, what){ pimg.src = src; tag.textContent = what; prev.hidden = false; drop.hidden = true; }
+    if (pr) fetchProofImage(proofId(S.uid, day)).then(function(src){ if (src && !data) show(src, "Sent photo"); });
+    file.addEventListener("change", function(){
+      var f = file.files && file.files[0]; if (!f) return;
+      err.hidden = true; send.disabled = true; label.textContent = "Getting your photo ready…";
+      shrink(f).then(function(d){ data = d; show(d, "New photo"); send.disabled = false; label.textContent = "Send to " + COACH; },
+                     function(e){ err.textContent = e.message; err.hidden = false; label.textContent = "Send to " + COACH; });
+    });
+    send.addEventListener("click", function(e){
+      if (!data || send.disabled) return;
+      send.disabled = true; label.textContent = "Sending…"; err.hidden = true;
+      submitProof(day, data, note.value.trim().slice(0, 280)).then(function(){
+        chalkAt(e, send); buzz([10, 40, 10]); closeSheet();
+        say("Sent. " + COACH + " will check day " + day + ".", "good");
+      }, function(e2){
+        send.disabled = false; label.textContent = "Send to " + COACH;
+        err.textContent = "Couldn't send it (" + ((e2 && e2.message) || e2) + "). Check your connection and try again.";
+        err.hidden = false;
+      });
+    });
+    setTimeout(function(){ try { file.focus(); } catch(_){} }, 60);
+  });
+}
+
+/* ---------- coach: review proofs ---------- */
+var REJECTING = null;
+var REASONS = ["Photo doesn't show the workout", "Wrong day", "Not the full workout"];
+function lightbox(src){
+  var lb = el("div","lightbox"), im = el("img"); im.src = src; im.alt = "Proof photo"; lb.appendChild(im);
+  lb.setAttribute("role","dialog"); lb.setAttribute("aria-label","Photo, tap to close");
+  function bye(){ if (lb.parentNode) lb.parentNode.removeChild(lb); document.removeEventListener("keydown", key); }
+  function key(e){ if (e.key === "Escape") bye(); }
+  lb.addEventListener("click", bye); document.addEventListener("keydown", key);
+  document.body.appendChild(lb);
+}
+function renderReview(box){
+  var list = Object.keys(S.proofs).filter(function(id){ return S.proofs[id].status === "pending"; })
+    .map(function(id){ return Object.assign({ id: id }, S.proofs[id]); })
+    .sort(function(a, b){ return a.submittedAt - b.submittedAt; });
+  box.textContent = "";
+  var h = el("h3", null, "Proof to review");
+  h.appendChild(el("span", "lvl " + (list.length ? "adv" : "none"), list.length ? list.length + " waiting" : "All clear"));
+  box.appendChild(h);
+  box.appendChild(el("p", null, list.length
+    ? "Approve and the day is marked done for them. Reject and they're told why, and can send another photo."
+    : "When an athlete sends a photo of their workout, it lands here for you to approve or reject."));
+  list.forEach(function(x){
+    var card = el("div","rv"), key = imgKey(x.id), src = IMG[key];
+    var ib = el("button","rv-img"); ib.type = "button";
+    ib.setAttribute("aria-label", "Open " + nameOf(x.uid) + "'s photo for day " + x.day);
+    if (src && src !== "error"){ var im = el("img"); im.src = src; im.alt = ""; ib.appendChild(im); ib.addEventListener("click", function(){ lightbox(src); }); }
+    else if (src === "error"){ ib.textContent = "Photo missing"; ib.disabled = true; }
+    else { ib.classList.add("loading"); fetchProofImage(x.id).then(function(){ render(); }); }
+    card.appendChild(ib);
+    var body = el("div","rv-body"), who = el("div","rv-who");
+    who.appendChild(el("div","av",initial(x.uid)));
+    var nm = el("div", null, nameOf(x.uid));
+    nm.appendChild(el("small", null, "Day " + x.day + " · " + describe(PLAN[x.day-1], lvl(x.uid)).big + " · sent " + ago(x.submittedAt)));
+    who.appendChild(nm); body.appendChild(who);
+    if (x.note) body.appendChild(el("p","rv-note","“" + x.note + "”"));
+    var act = el("div","rv-act");
+    if (REJECTING === x.id){
+      act.classList.add("rv-why");
+      REASONS.forEach(function(r){
+        var rb = el("button", null, r); rb.type = "button";
+        rb.addEventListener("click", function(){ review(x, false, r); }); act.appendChild(rb);
+      });
+      var other = el("button", null, "Other…"); other.type = "button";
+      other.addEventListener("click", function(){
+        var r = window.prompt("Why isn't " + nameOf(x.uid) + "'s day " + x.day + " approved? They'll see this.", "");
+        if (r !== null) review(x, false, r.trim());
+      });
+      act.appendChild(other);
+      var cancel = el("button","rv-cancel","Cancel"); cancel.type = "button";
+      cancel.addEventListener("click", function(){ REJECTING = null; render(); }); act.appendChild(cancel);
+    } else {
+      var yes = el("button","rv-yes","Approve"), no = el("button","rv-no","Reject");
+      yes.type = no.type = "button";
+      yes.addEventListener("click", function(){ yes.disabled = no.disabled = true; review(x, true); });
+      no.addEventListener("click", function(){ REJECTING = x.id; render(); });
+      act.appendChild(yes); act.appendChild(no);
+    }
+    body.appendChild(act); card.appendChild(body);
+    box.appendChild(card);
+  });
+}
+function review(x, ok, reason){
+  var pr = S.proofs[x.id]; if (!pr || !DB || !S.owner) return;
+  var uid = x.uid, day = x.day, had = uid in S.people, p = S.people[uid] || { done:{}, start:"" };
+  var before = pr.status, hadDay = !!p.done[day], now = Date.now();
+  pr.status = ok ? "approved" : "rejected"; pr.reason = ok ? "" : (reason || "").slice(0, 200);
+  if (ok){ p.done = Object.assign({}, p.done); p.done[day] = true; S.people[uid] = p; }
+  REJECTING = null; render();
+  var ref = DB.doc("progress/" + uid), step;
+  if (!ok) step = Promise.resolve();
+  else if (had && ref.update){ var f = { updated: now }; f["done." + day] = true; step = ref.update(f); }
+  else step = ref.set({ done: p.done, start: p.start || "", updated: now });
+  Promise.resolve(step).then(function(){
+    return DB.doc("proofs/" + x.id).update(ok ? { status: "approved", reviewedAt: now }
+                                              : { status: "rejected", reason: pr.reason, reviewedAt: now });
+  }).then(function(){ buzz(10); }, function(e){
+    pr.status = before; if (ok && !hadDay) delete p.done[day];
+    render(); alert("Couldn't save that review: " + ((e && e.message) || e) + "\n\nCheck your connection and try again.");
+  });
+}
+
+/* ---------- coach: any athlete's 60 days, tick or untick any of them ---------- */
+function openDays(uid){
+  openSheet(function(sh){ DAYS_FOR = uid; var b = el("div","days-body"); b.style.display = "grid"; b.style.gap = "12px"; sh.appendChild(b); drawDays(b); }, true);
+}
+function drawDays(body){
+  var uid = DAYS_FOR; if (!uid) return;
+  var me = isMe(uid), p = me ? S.me : (S.people[uid] || { done:{}, start:"" }), ti = todayIndex(p.start), lv = lvl(uid);
+  body.textContent = "";
+  body.appendChild(el("div","sh-eyebrow", (lv==="adv" ? "Advanced" : "Beginner") + " · " + stats(p, lv).n + " / 60 done"
+    + (ti !== null && ti >= 1 && ti <= 60 ? " · on day " + ti : "")));
+  var h = el("h3", null, nameOf(uid).replace(/ \(you\)$/, "") + (me ? " — your days" : "'s days")); h.id = "sh-title"; body.appendChild(h);
+  body.appendChild(el("p","sh-help","Tap any day to mark it done or not done: past, today or ahead. It saves straight away"
+    + (me ? "." : ", and " + nameOf(uid) + " sees it live.")));
+  var g = el("div","dgrid");
+  for (var d = 1; d <= 60; d++) (function(day){
+    var on = !!p.done[day], pr = S.proofs[proofId(uid, day)];
+    var c = el("button", "dcell " + PLAN[day-1].type + (on ? " on" : "") + (ti === day ? " today" : "") + (ti !== null && day > ti ? " ahead" : "")
+      + (pr && pr.status === "pending" ? " pend" : pr && pr.status === "rejected" ? " rej" : ""), String(day));
+    c.type = "button"; c.setAttribute("aria-pressed", on ? "true" : "false");
+    c.setAttribute("aria-label", "Day " + day + (on ? ", done" : ", not done") + (pr && pr.status === "pending" ? ", proof waiting" : ""));
+    c.addEventListener("click", function(){ coachSetDay(uid, day, !on); });
+    g.appendChild(c);
+  })(d);
+  body.appendChild(g);
+  var lg = el("div","dlegend");
+  [["var(--gold)","Done"],["transparent;box-shadow:0 0 0 2px var(--red)","Today"],["var(--gold);border-radius:50%","Proof waiting"],["var(--red);border-radius:50%","Not approved"]]
+    .forEach(function(x){ var s_ = el("span"); var i_ = el("i"); i_.setAttribute("style","background:" + x[0]); s_.appendChild(i_); s_.appendChild(document.createTextNode(x[1])); lg.appendChild(s_); });
+  body.appendChild(lg);
+}
+function coachSetDay(uid, day, on){
+  if (!S.owner || !DB) return;
+  if (isMe(uid)){ if (!!S.me.done[day] !== on) toggle(day); return; }
+  var had = uid in S.people, p = S.people[uid] || { done:{}, start:"" }, prevDone = p.done, now = Date.now();
+  var done = Object.assign({}, p.done); if (on) done[day] = true; else delete done[day];
+  p.done = done; S.people[uid] = p;
+  /* keep the proof in step: ticking approves it, unticking an approved one withdraws it */
+  var pid = proofId(uid, day), pr = S.proofs[pid], prevStatus = pr && pr.status, prevReason = pr && pr.reason;
+  if (pr && on && pr.status !== "approved"){ pr.status = "approved"; pr.reason = ""; }
+  else if (pr && !on && pr.status === "approved"){ pr.status = "rejected"; pr.reason = "Unticked by " + COACH; }
+  render();
+  var ref = DB.doc("progress/" + uid);
+  var w = had && ref.update ? ref.update({ done: done, updated: now }) : ref.set({ done: done, start: p.start || "", updated: now });
+  Promise.resolve(w).then(function(){
+    if (!pr || pr.status === prevStatus) return;
+    return DB.doc("proofs/" + pid).update(pr.status === "approved" ? { status: "approved", reviewedAt: now }
+                                                                   : { status: "rejected", reason: pr.reason, reviewedAt: now });
+  }).catch(function(e){
+    p.done = prevDone; if (pr){ pr.status = prevStatus; pr.reason = prevReason; } if (!had) delete S.people[uid];
+    render(); alert("Couldn't save day " + day + ": " + ((e && e.message) || e));
+  });
+}
+
+/* ---------- live proof updates ---------- */
+var proofsListening = false, proofsSeen = false;
+function listenProofs(){
+  if (proofsListening || !DB || !S.uid) return;
+  var col = DB.collection("proofs"), src = S.owner ? col : (col.where ? col.where("uid", "==", S.uid) : null);
+  if (!src) return;
+  proofsListening = true;
+  src.onSnapshot(function(snap){
+    var next = {};
+    snap.docs.forEach(function(d){
+      if (!d.exists) return;
+      var x = d.data() || {};
+      if (typeof x.day !== "number" || x.day < 1 || x.day > 60 || typeof x.uid !== "string") return;
+      next[d.id] = { uid: x.uid, day: x.day, status: x.status === "approved" || x.status === "rejected" ? x.status : "pending",
+        note: String(x.note || "").slice(0, 280), reason: String(x.reason || "").slice(0, 200), submittedAt: +x.submittedAt || 0 };
+    });
+    if (proofsSeen) Object.keys(next).forEach(function(id){
+      var a = S.proofs[id], b = next[id];
+      if (S.owner && b.status === "pending" && (!a || a.submittedAt !== b.submittedAt) && b.uid !== S.uid)
+        say(nameOf(b.uid) + " sent proof for day " + b.day + ".", "good");
+      if (!S.owner && b.uid === S.uid && b.status === "rejected" && (!a || a.status !== "rejected"))
+        say(COACH + " didn't approve day " + b.day + (b.reason ? ": “" + b.reason + "”" : "") + ". Tap the day to send another photo.", "bad");
+    });
+    S.proofs = next; proofsSeen = true;
+    render();
+  }, function(){ proofsListening = false; });
+}
+
 var assigning = false, pendingLv = null;
 var LV_ID = "_levels"; // owner-only doc: athletes can only write progress/<their own id>
 function assign(id, level){
@@ -1679,10 +2179,11 @@ Promise.all([api.use("user"), api.use("db")]).then(function(r){
     if (!uid){ S.mode = "local"; renderStatus(); return; }
     S.uid = uid;
     dbRef = db.doc("progress/" + uid);
-    try{ Promise.resolve(userApi.isOwner()).then(function(v){ S.owner = v === true; render(); }, function(){}); }catch(_){}
+    try{ Promise.resolve(userApi.isOwner()).then(function(v){ S.owner = v === true; listenProofs(); render(); },
+                                                 function(){ listenProofs(); }); }catch(_){ listenProofs(); }
     try{ Promise.resolve(userApi.can && userApi.can("data.write")).then(function(v){ if (v === false){ S.mode = "readonly"; render(); } }, function(){}); }catch(_){}
     var timer = setTimeout(function(){ S.slow = true; renderStatus(); }, 10000);
-    var joined = false;
+    var joined = false, meSeen = false;
     function resolveNames(ids){
       ids = ids.filter(function(id){ return !(id in S.names); });
       if (!ids.length || !userApi.profiles) return;
@@ -1707,7 +2208,17 @@ Promise.all([api.use("user"), api.use("db")]).then(function(r){
         }
         people[d.id] = clean(d.data()); if (d.id === uid) had = true;
       });
+      var before = S.me.done;
       if (had && !writing && !dirty) S.me = people[uid];
+      /* the coach just approved one of my days while I was watching */
+      if (meSeen && had && athlete()) Object.keys(S.me.done).forEach(function(k){
+        if (before[k]) return;
+        fire("done:" + k); buzz([14, 50, 22]);
+        say(COACH + " approved day " + k + ". Nice work.", "good");
+        var n = Object.keys(S.me.done).length;
+        if (MILESTONES[n] && !CELEBRATED[n]){ CELEBRATED[n] = true; setTimeout(function(){ celebrate(n); }, 700); }
+      });
+      if (had){ meSeen = true; S.hadDoc = true; }
       people[uid] = S.me;
       S.people = people;
       if (S.mode === "loading") S.mode = "live";

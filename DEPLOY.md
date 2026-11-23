@@ -238,6 +238,32 @@ person's name and email under one of three headings:
 Approve, and they land on the board on their next look - no reload needed if
 they're sitting on the waiting screen.
 
+**Proof photos: how a day gets done.** Athletes can't tick their own days.
+They tap today (or a past day they missed) and send a photo of the workout, with
+an optional note. The coach sees it under **Proof to review** and taps
+**Approve**, which marks the day done for them, or **Reject** with a reason
+they'll see. They can then send another photo. Future days stay locked for
+athletes. The coach ticks his own days directly, with no photo.
+
+Photos are shrunk on the phone before sending (to about 1280 px, usually
+150-400 KB) and stored in Firestore next to the rest of the data. Only the
+athlete who sent a photo and the coach can see it. When the coach takes
+someone off the challenge, their photos are deleted too.
+
+Storage: Firestore's free tier holds 1 GB. Ten athletes sending a photo every
+day for 60 days is roughly 600 photos, around 150-250 MB, so it fits with room
+to spare. Firebase's separate file-storage service was deliberately not used:
+new projects need a billing account for it.
+
+**Ticking or unticking anyone's day.** In **Admin · Athletes**, **Days** opens
+that athlete's 60 days. Tap any day, past, today or ahead, to mark it done or
+not done. Ticking a day that has a photo waiting also approves the photo.
+Unticking an approved day withdraws its approval.
+
+**Start dates.** An athlete sets their own start date once, when they begin.
+After that, only the coach can change it. Otherwise "today" could be slid
+forward to unlock days early.
+
 **Who hasn't checked in today.** The coach's **Today's check-in** panel
 lists everyone whose day hasn't been ticked yet. It shows which day each
 person is on and that day's workout, with whoever has missed the most days
@@ -280,12 +306,30 @@ the panel away from everyone.
 |---|---|---|
 | `members/{uid}` | join request: name, email, status (pending / approved / denied) | the person creates their own *pending*; only an owner changes it |
 | `names/{uid}` | display name, for labelling the board | that person only |
-| `progress/{uid}` | their ticked days + start date | that person only; an owner may delete it |
+| `progress/{uid}` | their approved days + start date | the owner marks days; the athlete only sets their start date, once |
+| `proofs/{uid_day}` | a proof's status, note, and the coach's reason | the athlete sends it as *pending*; only the owner approves or rejects |
+| `proofImages/{uid_day}` | the photo | the athlete who sent it; readable only by them and the owner |
 | `progress/_levels` | Beginner/Advanced per athlete | you only |
 
-Nobody can tick a day for somebody else, approve themselves, or promote
-themselves — those are enforced in `firestore.rules`, server-side, not in the
-page.
+Nobody can mark their own day done, approve their own photo, tick a day for
+somebody else, see a teammate's photo, approve themselves or promote
+themselves. All of that is enforced in `firestore.rules`, on Firebase's
+servers, not in the page. A modified page can't get around it.
+
+**Testing the rules.** `tests/rules.test.js` checks all of that (52 cases)
+against Google's real Firestore emulator. Re-run it after any edit to
+`firestore.rules` (it needs Java):
+
+```bash
+npm install
+```
+
+```bash
+npm run test:rules
+```
+
+The GitHub workflow runs it before every deploy and refuses to deploy if it
+fails.
 
 ## Cost
 

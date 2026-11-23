@@ -18,6 +18,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # The rules are what stop athletes marking their own days or seeing each
+      # other's photos. Never deploy them untested.
+      - name: Test the security rules (Firestore emulator)
+        run: |
+          npm install --no-audit --no-fund
+          npm run test:rules
+
       - name: Fail early if the Firebase config was never filled in
         run: |
           if grep -q "PASTE_API_KEY" public/claude-bridge.js; then

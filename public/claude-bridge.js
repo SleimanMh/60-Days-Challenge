@@ -427,12 +427,19 @@
         };
       },
       collection: function (name) {
-        var ref = store.collection(FS, name);
-        return {
-          onSnapshot: function (cb, errcb) {
-            return store.onSnapshot(ref, { includeMetadataChanges: true }, cb, function (e) {
+        function listen(q) {
+          return function (cb, errcb) {
+            return store.onSnapshot(q, { includeMetadataChanges: true }, cb, function (e) {
               if (errcb) errcb(e && e.code === "permission-denied" ? { code: "revoked" } : e);
             });
+          };
+        }
+        var ref = store.collection(FS, name);
+        return {
+          onSnapshot: listen(ref),
+          /* e.g. an athlete's own proofs: the rules refuse the whole collection */
+          where: function (field, op, value) {
+            return { onSnapshot: listen(store.query(ref, store.where(field, op, value))) };
           }
         };
       }
@@ -466,10 +473,19 @@
       if (!window.confirm(
         "Take " + name + " off the challenge?\n\n" +
         "They lose access and come off the squad board, and their ticked days " +
-        "are cleared.\n\nYou can let them back in later, but they would start " +
-        "again from day 1.")) return;
+        "and proof photos are deleted.\n\nYou can let them back in later, but " +
+        "they would start again from day 1.")) return;
       btn.disabled = true;
-      store.deleteDoc(store.doc(FS, "progress/" + uid)).catch(function () { /* may not exist */ })
+      /* their proof photos go too: nobody should keep them once they've left */
+      store.getDocs(store.query(store.collection(FS, "proofs"), store.where("uid", "==", uid)))
+        .then(function (snap) {
+          return Promise.all(snap.docs.map(function (d) {
+            return Promise.all([store.deleteDoc(store.doc(FS, "proofImages/" + d.id)),
+                                store.deleteDoc(store.doc(FS, "proofs/" + d.id))]);
+          }));
+        }).catch(function () { /* nothing to clear */ })
+        .then(function () { return store.deleteDoc(store.doc(FS, "progress/" + uid)); })
+        .catch(function () { /* may not exist */ })
         .then(function () {
           return store.updateDoc(store.doc(FS, "members/" + uid), { status: "denied" });
         })
