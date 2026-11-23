@@ -858,11 +858,18 @@ function tween(node, key, prop, value, show, dur){
   });
 }
 var SHOTS = {};
-function fire(key){ SHOTS[key] = now(); }
+function fire(key){
+  var t = now();
+  /* tidy up moments long finished; never one another element may still be playing */
+  Object.keys(SHOTS).forEach(function(k){ if (t - SHOTS[k] > 10000) delete SHOTS[k]; });
+  SHOTS[key] = t;
+}
 function shot(node, key, cls, life){
   var t0 = SHOTS[key]; if (t0 == null) return false;
   var gone = now() - t0;
-  if (gone > life){ delete SHOTS[key]; return false; }
+  /* Several elements can share one moment (the tile's stamp lasts longer than
+     the button's pop). Expiring here must not delete it for the others.    */
+  if (gone > life) return false;
   node.classList.add(cls); node.style.setProperty("--t", (-gone).toFixed(0) + "ms");
   return true;
 }
@@ -1995,7 +2002,7 @@ function openProof(day){
     var send = el("button","btn sh-send"), label = el("span",null,"Send to " + COACH);
     send.type = "button"; send.innerHTML = IC.camera; send.appendChild(label); send.disabled = true;
     sh.appendChild(send);
-    sh.appendChild(el("p","sh-fine","Only you and " + COACH + " can see this photo."));
+    sh.appendChild(el("p","sh-fine","Only you and the challenge admins can see this photo."));
 
     function show(src, what){ pimg.src = src; tag.textContent = what; prev.hidden = false; drop.hidden = true; }
     if (pr) fetchProofImage(proofId(S.uid, day)).then(function(src){ if (src && !data) show(src, "Sent photo"); });

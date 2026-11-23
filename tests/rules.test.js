@@ -124,6 +124,12 @@ const utcDay = n => { const d = new Date(); d.setUTCDate(d.getUTCDate() - n); re
   await t('Sam renames Lea', setDoc(doc(sam, 'names/lea'), { name:'loser' }), DENY);
   await t('Sam promotes himself to Advanced', setDoc(doc(sam, 'progress/_levels'), { levels:{ sam:'adv' }, updated:1 }), DENY);
   await t('coach assigns levels', setDoc(doc(coach, 'progress/_levels'), { levels:{ sam:'adv' }, updated:1 }), OK);
+  const sleiman = as('sleiman', 'sleimenmhanna@gmail.com');
+  await t('second admin (Sleiman) moves his own start date', setDoc(doc(sleiman, 'progress/sleiman'), { done: {}, start: utcDay(-10), updated: 1 }), OK);
+  await t('second admin approves Dee\'s waiting proof', updateDoc(doc(sleiman, 'proofs/dee_6'), { status: 'approved', reviewedAt: 1 }), OK);
+  await t('second admin views every proof', getDocs(collection(sleiman, 'proofs')), OK);
+  await t('second admin sets Lea\'s start date', updateDoc(doc(sleiman, 'progress/lea'), { start: '2026-11-01' }), OK);
+  await t('second admin still can\'t tick his own future day', updateDoc(doc(sleiman, 'progress/sleiman'), { 'done.1': true }), DENY);
   await t('coach with a capitalised email is still the coach', updateDoc(doc(as('coach2','Rtrader2002@Gmail.com'), 'progress/sam'), { start:'2026-11-10' }), OK);
 
   console.log(`\n${pass} passed, ${fail} failed`);
