@@ -721,6 +721,18 @@ body::after{content:"";position:fixed;inset:0;z-index:60;pointer-events:none;opa
 .lightbox{position:fixed;inset:0;z-index:97;display:grid;place-items:center;padding:16px;cursor:zoom-out;
   background:rgba(0,0,0,.93);animation:fadeIn .2s ease-out both}
 .lightbox img{max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.8)}
+/* ---- today only, double days, three strikes ---- */
+.t-x2{display:inline-block;margin-right:6px;padding:0 6px;border-radius:4px;background:var(--red);color:#fff;
+  font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:.08em;vertical-align:1px}
+.tile.is-double{box-shadow:inset 0 0 0 1px rgba(227,38,28,.45)}
+.m-warn{margin:0;padding:9px 12px;border-radius:10px;font-size:14px;background:rgba(227,38,28,.1);border:1px solid rgba(227,38,28,.45)}
+.m-warn b{color:#ff6b61}
+.house{margin:12px 0 0;padding:10px 14px;border-radius:10px;font-size:13.5px;color:var(--bone);
+  background:var(--panel);border:1px solid var(--line)}
+.house b{font-family:var(--display);font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-right:8px}
+.ci-out{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.08em;
+  text-transform:uppercase;color:#fff;background:var(--red)}
+.rv-warn{margin:0;font-size:13px;color:#ff6b61}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;animation-delay:0ms!important;transition:none!important}
   .js .reveal{opacity:1;translate:none}
@@ -792,6 +804,7 @@ body::after{content:"";position:fixed;inset:0;z-index:60;pointer-events:none;opa
       </div>
     </div>
     <div class="rules" id="rules"></div>
+    <p class="house" id="house"><b>The rules</b>Send proof on the day itself: past days can't be sent. Miss a day and the next one is doubled. Miss 3 days and you're off the challenge.</p>
     <div class="sec-h" style="margin:18px 0 0">
       <p id="plan-hint">Tap a day to mark it done. Your partner's check-ins show as initials.</p>
       <div class="legend">
@@ -954,7 +967,7 @@ function parseDate(s){ var a = s.split("-"); return new Date(+a[0], +a[1]-1, +a[
    server (the Date header on any response), so setting a phone to next month
    unlocks nothing. Until the server answers it uses the phone's clock; the
    database rules check Google's clock regardless.                         */
-var CLOCK_SKEW = 0, clockWarned = false;
+var CLOCK_SKEW = 0, clockWarned = false, CLOCK_OK = false;
 function realNow(){ return Date.now() + CLOCK_SKEW; }
 function syncClock(){
   if (!window.fetch) return;
@@ -963,7 +976,7 @@ function syncClock(){
     var server = Date.parse(r.headers.get("date") || "");
     if (isNaN(server)) return;
     var before = CLOCK_SKEW;
-    CLOCK_SKEW = server + (Date.now() - t0) / 2 - Date.now();
+    CLOCK_SKEW = server + (Date.now() - t0) / 2 - Date.now(); CLOCK_OK = true;
     if (Math.abs(CLOCK_SKEW) > 6 * 3600e3 && !clockWarned){
       clockWarned = true;
       try { say("Your phone's date is off, so the challenge is using the real date: " + new Date(realNow()).toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long" }) + "."); } catch(_){}
@@ -974,10 +987,55 @@ function syncClock(){
 syncClock();
 document.addEventListener("visibilitychange", function(){ if (!document.hidden) syncClock(); });
 
+/* Today's date in the challenge's time zone (Lebanon by default), by the real
+   clock: the same "today" for every phone, wherever it is and whatever its
+   clock says. Matches the database rules.                                  */
+var TZ = window.CHALLENGE_TZ || "", tzFmt = null, todayMemo = { at: 0, key: "" };
+function todayKey(){
+  var n = Date.now();
+  if (n - todayMemo.at < 1000 && todayMemo.key) return todayMemo.key;
+  var d = new Date(realNow()), key = "";
+  try {
+    tzFmt = tzFmt || new Intl.DateTimeFormat("en-CA", { timeZone: TZ || undefined, year: "numeric", month: "2-digit", day: "2-digit" });
+    var parts = {}; tzFmt.formatToParts(d).forEach(function(x){ parts[x.type] = x.value; });
+    if (parts.year && parts.month && parts.day) key = parts.year + "-" + parts.month + "-" + parts.day;
+  } catch(_){}
+  if (!key) key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  todayMemo = { at: n, key: key };
+  return key;
+}
+function ymdUTC(s){ var a = s.split("-"); return Date.UTC(+a[0], +a[1] - 1, +a[2]); }
+function keyOf(ms){ return new Date(ms).toISOString().slice(0, 10); }
+function dateKeyOf(start, day){ return keyOf(ymdUTC(start) + (day - 1) * 86400000); }
 function todayIndex(start){
-  if (!start) return null;
-  var t = new Date(realNow()); t.setHours(0,0,0,0);
-  return Math.round((t - parseDate(start)) / 86400000) + 1;
+  if (!start || !/^\d{4}-\d{2}-\d{2}$/.test(start)) return null;
+  return Math.round((ymdUTC(todayKey()) - ymdUTC(start)) / 86400000) + 1;
+}
+
+/* ---------- missed days, double days, three strikes ----------
+   A day is missed once it's over without being approved. A proof sent on
+   time and still waiting for review doesn't count: a slow review mustn't
+   cost anyone. The day after a missed one is doubled. Three missed days and
+   you're off. These count only from S.rulesFrom - the day after an admin
+   first opened this version - never retroactively.                        */
+var OUT_AFTER = 3;
+function progressOf(uid){ return isMe(uid) ? S.me : (S.people[uid] || { done:{}, start:"" }); }
+function counts(p, day){ return !!S.rulesFrom && !!p.start && dateKeyOf(p.start, day) >= S.rulesFrom; }
+function missedDay(uid, p, day){
+  var ti = todayIndex(p.start);
+  if (ti === null || day < 1 || day >= ti || day > 60 || p.done[day] || !counts(p, day)) return false;
+  var pr = S.proofs[proofId(isMe(uid) ? S.uid : uid, day)];
+  return !(pr && pr.status === "pending");
+}
+function missedCount(uid, p){
+  var ti = todayIndex(p.start), n = 0; if (ti === null) return 0;
+  for (var d = 1; d < Math.min(ti, 61); d++) if (missedDay(uid, p, d)) n++;
+  return n;
+}
+function doubledDay(uid, p, day){ return day > 1 && missedDay(uid, p, day - 1); }
+function describeFor(uid, day){
+  var p = progressOf(uid);
+  return describe(PLAN[day - 1], lvl(uid), doubledDay(uid, p, day));
 }
 function dateFor(start, day){
   if (!start) return "";
@@ -998,13 +1056,19 @@ function milSet(){
   MIL_SET.forEach(function(n){ var li = el("li"); li.appendChild(el("b",null,"5")); li.appendChild(document.createTextNode(n)); ol.appendChild(li); });
   return ol;
 }
-function describe(p, level){
-  if (p.type==="run") return {big:p.km.toFixed(1)+" km run", sub: p.day===1 ? "Opening run. Set the pace." : "+100 m on your last run"};
+function describe(p, level, dbl){
+  var k = dbl ? 2 : 1, x2 = dbl ? " ×2" : "", why = "Doubled: the day before was missed. ";
+  if (p.type==="run") return {big:(p.km*k).toFixed(1)+" km run"+x2,
+    sub: dbl ? why + "Twice the distance." : (p.day===1 ? "Opening run. Set the pace." : "+100 m on your last run")};
   if (p.type==="push"){
     var x = p[level];
-    if (level==="adv") return {big:"50 Eagles pushups + "+x.df+" dragon flags", sub:"Eagles set: 5 reps of each variation, in order. Then dragon flags, one more than last session.", set:true};
-    return {big:x.push+" pushups + core", sub:x.push+" normal pushups, then core: Plank "+secs(x.plank)+" · Hollow body "+secs(x.hollow)+" · Superman "+secs(x.superman)+"."};
+    if (level==="adv") return {big:(50*k)+" Eagles pushups + "+(x.df*k)+" dragon flags"+x2,
+      sub: dbl ? why + "The Eagles set twice through, then twice the dragon flags."
+               : "Eagles set: 5 reps of each variation, in order. Then dragon flags, one more than last session.", set:true};
+    return {big:(x.push*k)+" pushups + core"+x2, sub:(dbl ? why : "")+(x.push*k)+" normal pushups, then core: Plank "+secs(x.plank*k)
+      +" · Hollow body "+secs(x.hollow*k)+" · Superman "+secs(x.superman*k)+"."};
   }
+  if (dbl) return {big:"Double hike ×2", sub: why + "Go twice as long, or twice as far."};
   return {big:"Hiking day", sub:"Get outside and move. Active recovery for the legs and lungs."};
 }
 
@@ -1077,8 +1141,18 @@ function renderMission(){
     box.appendChild(t);
     var fin = el("div","m-row"); fin.appendChild(metaOf(st, sk)); box.appendChild(fin);
   } else {
-    var p = PLAN[day-1], d = describe(p, level);
+    var p = PLAN[day-1], d = describe(p, level, doubledDay(S.uid || "_me", S.me, day));
     var task = el("div","m-task",d.big); task.appendChild(el("small",null,d.sub)); box.appendChild(task);
+    var mc = S.uid ? missedCount(S.uid, S.me) : 0;
+    if (S.out){
+      var o = el("p","m-warn"); o.appendChild(el("b",null,"You're off the challenge. "));
+      o.appendChild(document.createTextNode("You missed " + OUT_AFTER + " days. Talk to " + COACH + " if you want back in."));
+      box.appendChild(o);
+    } else if (athlete() && mc === OUT_AFTER - 1){
+      var w = el("p","m-warn"); w.appendChild(el("b",null,mc + " days missed. "));
+      w.appendChild(document.createTextNode("One more and you're off the challenge."));
+      box.appendChild(w);
+    }
     if (d.set) box.appendChild(milSet());
     var row = el("div","m-row");
     var done = !!S.me.done[day], b;
@@ -1087,13 +1161,16 @@ function renderMission(){
       var cl = "btn" + (done ? " done" : ""), ct = done ? "Day "+day+" done ✓" : "Mark day "+day+" done";
       if (!done && S.uid && ti === null){ cl += " locked"; ct = "Set your start date to begin"; }
       else if (!done && S.uid && day > ti){ cl += " locked"; ct = "Day " + day + " opens " + dateFor(S.me.start, day); }
+      else if (!done && S.uid && day < ti){ cl += " locked"; ct = "Day " + day + " is over"; }
       b = el("button", cl, ct);
     } else {
       var pr = proofOf(S.uid, day), cls = "btn", lbl, cam = false;
       if (done){ cls += " done"; lbl = "Day " + day + " approved ✓"; }
+      else if (S.out){ cls += " locked"; lbl = "Off the challenge"; }
       else if (pr && pr.status === "pending"){ cls += " pending"; lbl = "Waiting for " + COACH; }
       else if (ti === null){ cls += " locked"; lbl = "Set your start date to begin"; }
       else if (day > ti){ cls += " locked"; lbl = "Day " + day + " opens " + dateFor(S.me.start, day); }
+      else if (day < ti){ cls += " locked"; lbl = "Day " + day + " is over"; }
       else { cam = true; lbl = (pr && pr.status === "rejected" ? "Resend" : "Send") + " day " + day + " proof"; }
       b = el("button", cls);
       if (cam) b.innerHTML = IC.camera;
@@ -1115,6 +1192,7 @@ function renderMission(){
      or "today" could be slid around to open up locked days. */
   var lockedStart = athlete() && !!S.me.start;
   if (lockedStart){ inp.disabled = true; l2.title = "Ask " + COACH + " to change your start date"; }
+  if (athlete() && !lockedStart) inp.min = todayKey();          /* past days can't be sent, so no starting in the past */
   inp.addEventListener("change", function(){
     var v = /^\d{4}-\d{2}-\d{2}$/.test(inp.value) ? inp.value : "";
     if (v === (S.me.start || "")) return;            /* nothing changed: no write, no second prompt */
@@ -1247,8 +1325,7 @@ function todayOf(p){
   if (ti === null) return { k: "nostart" };
   if (ti < 1) return { k: "upcoming", inDays: 1 - ti };
   if (ti > 60) return { k: "finished" };
-  var missed = 0; for (var d = 1; d < ti; d++) if (!p.done[d]) missed++;
-  return { k: p.done[ti] ? "done" : "todo", day: ti, missed: missed };
+  return { k: p.done[ti] ? "done" : "todo", day: ti, missed: 0 };
 }
 /* The panels are rebuilt on every change. Don't yank a date picker out from
    under the coach: hold the rebuild until they leave the field. */
@@ -1263,6 +1340,7 @@ function renderCheckin(box){
   var todo = [], done = [], other = [];
   roster().forEach(function(r){
     r.t = todayOf(r.p);
+    if (r.t.k === "todo" || r.t.k === "done") r.t.missed = missedCount(r.id, r.p);
     if (r.t.k === "todo"){ var pr = proofOf(r.id, r.t.day); r.sent = !!(pr && pr.status === "pending"); }
     (r.t.k === "todo" ? todo : r.t.k === "done" ? done : other).push(r);
   });
@@ -1275,7 +1353,9 @@ function renderCheckin(box){
     owing.length ? owing.length + " still to go" : todo.length ? "Proof to review" : done.length ? "Everyone's in" : "Nobody due today"));
   box.appendChild(h);
   var p = el("p");
-  p.appendChild(el("span", "ci-date", new Date(realNow()).toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long" })));
+  var dayLabel; try { dayLabel = new Date(realNow()).toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long", timeZone: TZ || undefined }); }
+  catch(_){ dayLabel = new Date(realNow()).toLocaleDateString(); }
+  p.appendChild(el("span", "ci-date", dayLabel));
   p.appendChild(document.createTextNode(todo.length
     ? " · They haven't ticked today's day yet. Most days missed first."
     : done.length ? " · Every athlete due today has checked in." : ""));
@@ -1286,7 +1366,8 @@ function renderCheckin(box){
     who.appendChild(el("div", "av", initial(r.id)));
     var nm = el("div", null, nameOf(r.id));
     if (r.t.missed) nm.appendChild(el("span", "ci-miss", r.t.missed + " missed"));
-    nm.appendChild(el("span", "ci-what", "Day " + r.t.day + " · " + describe(PLAN[r.t.day - 1], lvl(r.id)).big));
+    if (r.t.missed === OUT_AFTER - 1) nm.appendChild(el("span", "ci-out", "One more and they're out"));
+    nm.appendChild(el("span", "ci-what", "Day " + r.t.day + " · " + describeFor(r.id, r.t.day).big));
     who.appendChild(nm); row.appendChild(who);
     row.appendChild(el("span", "ci-state" + (r.sent ? " sent" : ""), r.sent ? "Proof sent" : "Not yet"));
     box.appendChild(row);
@@ -1297,7 +1378,7 @@ function renderCheckin(box){
     cp.title = "Copies a message you can paste into your group chat";
     cp.addEventListener("click", function(){
       var msg = "60 Days Challenge — still to check in today:\n" + owing.map(function(r){
-        return "• " + nameOf(r.id).replace(/ \(you\)$/, "") + " — Day " + r.t.day + ": " + describe(PLAN[r.t.day - 1], lvl(r.id)).big;
+        return "• " + nameOf(r.id).replace(/ \(you\)$/, "") + " — Day " + r.t.day + ": " + describeFor(r.id, r.t.day).big;
       }).join("\n") + "\nNo excuses.";
       copyText(msg).then(function(){ cp.textContent = "Copied — paste it in the chat"; cp.classList.add("copied"); },
                          function(){ window.prompt("Copy this message:", msg); });
@@ -1361,6 +1442,10 @@ function setStart(id, v){
   if (isMe(id)){ S.me.start = v; flashSaved(id); save(); render(); return; }
   if (!DB || !S.owner) return;
   var had = id in S.people, p = S.people[id] || { done:{}, start:"" }, old = p.start;
+  var trial = { done: p.done || {}, start: v }, member = (S.members || []).filter(function(m){ return m.id === id; })[0];
+  if (v && !(member && member.admin) && missedCount(id, trial) >= OUT_AFTER
+      && !window.confirm("Starting " + nameOf(id) + " on " + dateFor(v, 1) + " means " + missedCount(id, trial)
+                         + " missed days already, so they'd be taken off the challenge. Set it anyway?")){ render(); return; }
   p.start = v; S.people[id] = p;
   var ref = DB.doc("progress/" + id), body = { start: v, updated: Date.now() };
   var write = had && ref.update ? ref.update(body) : ref.set({ done: p.done || {}, start: v, updated: body.updated });
@@ -1445,7 +1530,9 @@ function tile(p, level, mineLevel){
   var mine = !!S.me.done[p.day], ti = todayIndex(S.me.start), ath = athlete();
   var pr = ath && !mine ? proofOf(S.uid, p.day) : null;
   var pending = !!(pr && pr.status === "pending"), rejected = !!(pr && pr.status === "rejected");
-  var locked = !!S.uid && !mine && (ti === null || p.day > ti);   /* the coach's own days too */
+  /* your own days: only today can be ticked or proven - past and future are shut */
+  var locked = !!S.uid && !mine && !pending && (ti === null || p.day !== ti || S.out);
+  var dbl = ti !== null && p.day <= ti && doubledDay(S.uid || "_me", S.me, p.day);
   var t = el("button","tile "+p.type+(mine?" is-done":"")+(ti===p.day?" is-today":"")
     +(ti!==null && p.day<ti && !mine && !pending ? " is-missed" : "")+(ti!==null && p.day>ti ? " is-future" : "")
     +(pending ? " is-pending" : "")+(rejected ? " is-rejected" : "")+(locked ? " is-locked" : ""));
@@ -1466,8 +1553,21 @@ function tile(p, level, mineLevel){
     else { tg.textContent = secs(x.plank); tg.appendChild(el("small",null,"plank")); sub = x.push+" normal pushups · hollow "+secs(x.hollow)+" · superman "+secs(x.superman); }
   }
   else { tg.textContent = "Hike"; sub = "Active recovery"; }
+  if (dbl){
+    /* the day after a missed one: double everything */
+    if (p.type==="run"){ tg.textContent = (p.km*2).toFixed(1); tg.appendChild(el("small",null,"km")); sub = "Double day: twice the distance"; }
+    else if (p.type==="push"){
+      var x2 = p[level];
+      if (level==="adv"){ tg.textContent = x2.df*2; tg.appendChild(el("small",null,"flags")); sub = "100 Eagles pushups (2 sets) + "+(x2.df*2)+" dragon flags"; }
+      else { tg.textContent = secs(x2.plank*2); tg.appendChild(el("small",null,"plank")); sub = (x2.push*2)+" normal pushups · hollow "+secs(x2.hollow*2)+" · superman "+secs(x2.superman*2); }
+    }
+    else { tg.textContent = "Hike"; tg.appendChild(el("small",null,"×2")); sub = "Twice as long or far"; }
+    t.classList.add("is-double");
+  }
   t.appendChild(tg);
-  t.appendChild(el("span","t-sub",sub));
+  var subEl = el("span","t-sub",sub);
+  if (dbl) subEl.insertBefore(el("span","t-x2","×2"), subEl.firstChild);
+  t.appendChild(subEl);
   var foot = el("span","t-foot");
   foot.appendChild(el("span","t-date",dateFor(S.me.start,p.day)));
   var dots = el("span","dots");
@@ -1489,7 +1589,7 @@ function tile(p, level, mineLevel){
     stamp.addEventListener("animationend", function(e){ if (e.animationName === "stampOut" && stamp.parentNode) stamp.parentNode.removeChild(stamp); });
     t.appendChild(stamp);
   }
-  t.setAttribute("aria-label","Day "+p.day+": "+describe(p, level).big+(mine?", done":", not done")
+  t.setAttribute("aria-label","Day "+p.day+": "+describe(p, level, dbl).big+(mine?", done":", not done")
     +(pending ? ", proof waiting for approval" : rejected ? ", proof not approved" : locked ? ", locked" : "")
     +(ti!==null && p.day<ti && !mine && !pending ? ", missed" : ""));
   t.addEventListener("click", function(e){ tapDay(p.day, e, t); });
@@ -1532,6 +1632,8 @@ function renderSoon(){
   requestAnimationFrame(function(){ renderQueued = false; render(); });
 }
 function render(){
+  S.out = athlete() && S.hadDoc && proofsSeen && missedCount(S.uid, S.me) >= OUT_AFTER;
+  if (S.owner) setTimeout(enforceRules, 0);
   renderStatus(); renderMission(); renderAdmin(); renderBoard(); renderGrid();
   if (sheetEl && DAYS_FOR){ var db_ = sheetEl.querySelector(".days-body"); if (db_) drawDays(db_); }
 }
@@ -1887,13 +1989,20 @@ function tapDay(day, e, from){
     if (on && S.uid && !ownDayOpen(day)) return;
     toggle(day); if (on) chalkAt(e, from); return;
   }
+  if (S.out){ say("You're off the challenge. Talk to " + COACH + " if you want back in."); return; }
   if (S.me.done[day]){ say("Day " + day + " is approved. Nice work.", "good"); return; }
   if (ti === null){
     say("Set your start date first, then send proof for each day.");
     var sd = document.getElementById("start-date"); if (sd && !sd.disabled) sd.focus();
     return;
   }
-  if (day > ti){ say("Day " + day + " opens on " + dateFor(S.me.start, day) + ". You can send proof for today and days already gone."); return; }
+  if (day > ti){ say("Day " + day + " opens on " + dateFor(S.me.start, day) + ". Proof can only be sent on the day itself."); return; }
+  if (day < ti){
+    var past = proofOf(S.uid, day);
+    say(past && past.status === "pending" ? "Day " + day + "'s proof is with " + COACH + "."
+      : "Day " + day + " is over. Proof can only be sent on the day itself.");
+    return;
+  }
   openProof(day);
 }
 
@@ -1906,6 +2015,7 @@ function ownDayOpen(day){
     return false;
   }
   if (day > ti){ say("Day " + day + " opens on " + dateFor(S.me.start, day) + ". Your own days can't be ticked ahead of time."); return false; }
+  if (day < ti){ say("Day " + day + " is over. Your own days can only be ticked on the day itself; another admin can fix a past one."); return false; }
   return true;
 }
 
@@ -2026,7 +2136,7 @@ function openProof(day){
   openSheet(function(sh){
     sh.appendChild(el("div","sh-eyebrow","Day " + day + " · " + dateFor(S.me.start, day)));
     var h = el("h3",null,"Send your proof"); h.id = "sh-title"; sh.appendChild(h);
-    sh.appendChild(el("p","sh-task", describe(PLAN[day-1], lv).big));
+    sh.appendChild(el("p","sh-task", describe(PLAN[day-1], lv, doubledDay(S.uid, S.me, day)).big));
     if (pr && pr.status === "pending")
       sh.appendChild(el("div","sh-banner wait","Sent " + ago(pr.submittedAt) + ", waiting for " + COACH + ". A new photo replaces it."));
     if (pr && pr.status === "rejected")
@@ -2112,11 +2222,14 @@ function renderReview(box){
     var body = el("div","rv-body"), who = el("div","rv-who");
     who.appendChild(el("div","av",initial(x.uid)));
     var nm = el("div", null, nameOf(x.uid));
-    nm.appendChild(el("small", null, "Day " + x.day + " · " + describe(PLAN[x.day-1], lvl(x.uid)).big + " · sent " + ago(x.submittedAt)));
+    nm.appendChild(el("small", null, "Day " + x.day + " · " + describeFor(x.uid, x.day).big + " · sent " + ago(x.submittedAt)));
     who.appendChild(nm); body.appendChild(who);
     if (x.note) body.appendChild(el("p","rv-note","“" + x.note + "”"));
     var act = el("div","rv-act");
     if (REJECTING === x.id){
+      var xp = progressOf(x.uid), xti = todayIndex(xp.start);
+      if (xti !== null && x.day < xti && counts(xp, x.day) && missedCount(x.uid, xp) + 1 >= OUT_AFTER)
+        body.appendChild(el("p","rv-warn","This would be " + nameOf(x.uid) + "'s " + OUT_AFTER + "rd missed day: rejecting takes them off the challenge."));
       act.classList.add("rv-why");
       REASONS.forEach(function(r){
         var rb = el("button", null, r); rb.type = "button";
@@ -2175,11 +2288,11 @@ function drawDays(body){
     + (ti !== null && ti >= 1 && ti <= 60 ? " · on day " + ti : "")));
   var h = el("h3", null, nameOf(uid).replace(/ \(you\)$/, "") + (me ? " — your days" : "'s days")); h.id = "sh-title"; body.appendChild(h);
   body.appendChild(el("p","sh-help", me
-    ? "Your own days: tick today or any day already gone. Days ahead stay locked, like everyone's."
+    ? "Your own days: only today can be ticked, like everyone's. Another admin can fix a past one."
     : "Tap any day to mark it done or not done: past, today or ahead. It saves straight away, and " + nameOf(uid) + " sees it live."));
   var g = el("div","dgrid");
   for (var d = 1; d <= 60; d++) (function(day){
-    var on = !!p.done[day], pr = S.proofs[proofId(uid, day)], shut = me && !on && (ti === null || day > ti);
+    var on = !!p.done[day], pr = S.proofs[proofId(uid, day)], shut = me && !on && (ti === null || day !== ti);
     var c = el("button", "dcell " + PLAN[day-1].type + (on ? " on" : "") + (ti === day ? " today" : "") + (ti !== null && day > ti ? " ahead" : "")
       + (shut ? " shut" : "")
       + (pr && pr.status === "pending" ? " pend" : pr && pr.status === "rejected" ? " rej" : ""), String(day));
@@ -2217,6 +2330,38 @@ function coachSetDay(uid, day, on){
   });
 }
 
+/* ---------- the new rules, kept by whichever admin is looking ----------
+   There's no server process running at midnight on the free plan, so the
+   admins' pages keep the rules: the first admin to open this version sets
+   the day they start (tomorrow, never retroactively), and any admin's page
+   takes off an athlete with three missed days - only once everything it
+   needs has arrived from the server and the real date is known.          */
+var takingOff = {};
+function enforceRules(){
+  if (!S.owner || !DB || !CLOCK_OK || !S.levelsLoaded || S.mode !== "live") return;
+  if (!S.rulesFrom){
+    S.rulesFrom = keyOf(ymdUTC(todayKey()) + 86400000);
+    writeLevels();
+    return;
+  }
+  if (!S.proofsFromServer || !S.squadFromServer || !S.members) return;
+  S.members.forEach(function(m){
+    if (m.admin || takingOff[m.id] || !(m.id in S.people) || isMe(m.id)) return;
+    var p = S.people[m.id], n = missedCount(m.id, p);
+    if (n < OUT_AFTER) return;
+    takingOff[m.id] = true;
+    var name = nameOf(m.id), ops = [{ op: "delete", path: "progress/" + m.id }];
+    Object.keys(S.proofs).forEach(function(id){
+      if (S.proofs[id].uid !== m.id) return;
+      ops.push({ op: "delete", path: "proofs/" + id }); ops.push({ op: "delete", path: "proofImages/" + id });
+    });
+    ops.push({ op: "update", path: "members/" + m.id, data: { status: "out", outAt: Date.now() } });
+    Promise.resolve(commitAll(ops)).then(function(){
+      say(name + " missed " + n + " days and was taken off the challenge.", "bad");
+    }, function(){ delete takingOff[m.id]; });
+  });
+}
+
 /* ---------- live proof updates ---------- */
 var proofsListening = false, proofsSeen = false;
 function listenProofs(){
@@ -2238,9 +2383,11 @@ function listenProofs(){
       if (S.owner && b.status === "pending" && (!a || a.submittedAt !== b.submittedAt) && b.uid !== S.uid)
         say(nameOf(b.uid) + " sent proof for day " + b.day + ".", "good");
       if (!S.owner && b.uid === S.uid && b.status === "rejected" && (!a || a.status !== "rejected"))
-        say(COACH + " didn't approve day " + b.day + (b.reason ? ": “" + b.reason + "”" : "") + ". Tap the day to send another photo.", "bad");
+        say(COACH + " didn't approve day " + b.day + (b.reason ? ": “" + b.reason + "”" : "") + ". "
+          + (b.day === todayIndex(S.me.start) ? "Tap the day to send another photo." : "It's over now, so it counts as missed."), "bad");
     });
     S.proofs = next; proofsSeen = true;
+    if (!snap.metadata || !snap.metadata.fromCache) S.proofsFromServer = true;
     renderSoon();
   }, function(){ proofsListening = false; });
 }
@@ -2256,6 +2403,7 @@ function writeLevels(){
   if (assigning){ pendingLv = true; return; }
   assigning = true; pendingLv = false;
   var body = {levels:{}, updated:Date.now()};
+  if (S.rulesFrom) body.rulesFrom = S.rulesFrom;
   Object.keys(S.levels).forEach(function(k){ if (S.levels[k]==="adv"||S.levels[k]==="beg") body.levels[k] = S.levels[k]; });
   DB.doc("progress/" + LV_ID).set(body).then(function(){
     assigning = false; if (pendingLv) writeLevels();
@@ -2269,9 +2417,9 @@ window.addEventListener("cb-members", function(e){
   renderSoon();
 });
 /* "Today" changes at midnight even if nobody touches the page. */
-(function midnight(){
-  var n = new Date(realNow()), next = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 0, 0, 5);
-  setTimeout(function(){ render(); midnight(); }, next - n);
+(function(){
+  var last = "";
+  setInterval(function(){ var k = todayKey(); if (last && k !== last) renderSoon(); last = k; }, 20000);
 })();
 
 render();
@@ -2310,10 +2458,13 @@ Promise.all([api.use("user"), api.use("db")]).then(function(r){
             if (src && typeof src === "object") for (var k in src){ if (src[k]==="adv"||src[k]==="beg") lv[k] = src[k]; }
             S.levels = lv;
           }
+          var rf = (d.data() || {}).rulesFrom;
+          if (typeof rf === "string" && /^\d{4}-\d{2}-\d{2}$/.test(rf)) S.rulesFrom = rf;
           return;
         }
         people[d.id] = clean(d.data()); if (d.id === uid) had = true;
       });
+      if (meSeen && !had && athlete() && !snap.metadata.fromCache){ location.reload(); return; }
       var before = S.me.done;
       if (had && !writing && !dirty) S.me = people[uid];
       /* the coach just approved one of my days while I was watching */
@@ -2327,6 +2478,7 @@ Promise.all([api.use("user"), api.use("db")]).then(function(r){
       if (had){ meSeen = true; S.hadDoc = true; }
       people[uid] = S.me;
       S.people = people;
+      if (!snap.metadata.fromCache){ S.levelsLoaded = true; S.squadFromServer = true; }
       if (S.mode === "loading") S.mode = "live";
       // first visit: add this athlete to the squad so Raji can assign a level
       if (!snap.metadata.fromCache && !had && !joined && S.mode === "live"){ joined = true; save(); }

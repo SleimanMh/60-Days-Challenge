@@ -239,8 +239,7 @@ Approve, and they land on the board on their next look - no reload needed if
 they're sitting on the waiting screen.
 
 **Proof photos: how a day gets done.** Athletes can't tick their own days.
-They tap today (or a past day they missed) and send a photo of the workout, with
-an optional note. The coach sees it under **Proof to review** and taps
+They tap today and send a photo of the workout, with an optional note. The coach sees it under **Proof to review** and taps
 **Approve**, which marks the day done for them, or **Reject** with a reason
 they'll see. They can then send another photo. Future days stay locked for
 athletes. The coach ticks his own days directly, with no photo.
@@ -254,6 +253,35 @@ Storage: Firestore's free tier holds 1 GB. Ten athletes sending a photo every
 day for 60 days is roughly 600 photos, around 150-250 MB, so it fits with room
 to spare. Firebase's separate file-storage service was deliberately not used:
 new projects need a billing account for it.
+
+**Today only, double days, three strikes.**
+
+- **Proof can only be sent on the day itself.** Past days and future days are
+  locked for athletes. The same goes for admins' own days. Another admin can
+  fix a past day for them.
+- **A missed day doubles the next one.** A day is missed once it ends without
+  being approved. A proof sent on time and still waiting for review does not
+  count, but a rejected one does. The next day's workout shows "×2": double
+  the distance, the reps, the dragon flags and the core times, or a double
+  hike.
+- **Three missed days and you're off the challenge.** The athlete's own page
+  says so at once. The removal itself (status "out", their record and photos
+  deleted) happens the next time either admin opens the site. Admins are
+  never removed automatically. The athlete sees "Off the challenge", and an
+  admin can still **Let back in** from Squad admin.
+- **These rules are never retroactive.** They start the day after an admin
+  first opens the version that has them. That date is saved once, as
+  `rulesFrom` in `progress/_levels`. Days before it never count as missed.
+- **"Today" follows the challenge's time zone,** Lebanon (`Asia/Beirut`), and
+  the real date rather than the phone's clock. The rules accept a day at
+  UTC+2 or UTC+3, because they can't follow daylight saving, so the server
+  gives a one-hour margin around midnight. The page itself is exact. If the
+  squad moves elsewhere, change `CONFIG.timeZone` in `public/claude-bridge.js`
+  and `tzMin()` and `tzMax()` in `firestore.rules`.
+- **There's no midnight job.** The free plan has no server running on a
+  schedule, which would need Cloud Functions and a billing account. So the
+  rules are kept by whoever looks: the athlete's own page and the admins'
+  pages.
 
 **Ticking or unticking anyone's day.** In **Admin · Athletes**, **Days** opens
 that athlete's 60 days. Tap any day, past, today or ahead, to mark it done or
@@ -324,7 +352,7 @@ somebody else, see a teammate's photo, approve themselves or promote
 themselves. All of that is enforced in `firestore.rules`, on Firebase's
 servers, not in the page. A modified page can't get around it.
 
-**Testing the rules.** `tests/rules.test.js` checks all of that (69 cases, including the date checks)
+**Testing the rules.** `tests/rules.test.js` checks all of that (84 cases, including today-only and the date checks)
 against Google's real Firestore emulator. Re-run it after any edit to
 `firestore.rules` (it needs Java):
 

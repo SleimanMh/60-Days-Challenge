@@ -43,12 +43,16 @@
     ownerEmails: ["rtrader2002@gmail.com", "sleimenmhanna@gmail.com"],
     /* The coach's first name, as athletes see it in the page's messages. */
     coachName: "Raji",
+    /* When a challenge day starts and ends, for everyone. Must match tzMin()
+       and tzMax() in firestore.rules (Lebanon: UTC+2 winter, UTC+3 summer). */
+    timeZone: "Asia/Beirut",
     /* Shown on the sign-in gate. */
     title: "60 Days Challenge",
     blurb: "Sign in to join the challenge. Your coach approves new athletes."
   };
 
   if (CONFIG.coachName) window.CHALLENGE_COACH = CONFIG.coachName;
+  if (CONFIG.timeZone) window.CHALLENGE_TZ = CONFIG.timeZone;
 
   var SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 
@@ -327,8 +331,13 @@
 
   function waitingRoom(auth, A, store, FS, me, member) {
     var denied = member && member.status === "denied";
+    var out = member && member.status === "out";
     var parts = [];
-    if (denied) {
+    if (out) {
+      parts.push(logo(), node("h2", "Off the challenge"),
+        node("p", "You missed 3 days, so you were taken off the challenge. If you want back in, talk to " + coach() + "."));
+      denied = true;   /* no waiting, no live check: just sign out */
+    } else if (denied) {
       parts.push(logo(), node("h2", "Not on this challenge"),
         node("p", "You're not on the squad right now. If that's a mistake, talk to " + coach() + "."));
     } else {
@@ -508,7 +517,7 @@
       var who = node("div", null, "who");
       who.appendChild(node("div", (m.name || "?").trim().charAt(0).toUpperCase() || "?", "av"));
       var nm = node("div", (m.name || "Athlete") + (id === me.uid ? " (you)" : ""));
-      nm.appendChild(node("small", m.email || ""));
+      nm.appendChild(node("small", (m.email || "") + (m.status === "out" ? " · missed 3 days, taken off automatically" : "")));
       who.appendChild(nm);
       r.appendChild(who);
       if (actions.length) {
@@ -536,7 +545,7 @@
          progress record yet, and the coach's check-in list needs them too.  */
       try {
         window.dispatchEvent(new CustomEvent("cb-members", { detail: active.map(function (e) {
-          return { id: e.id, name: e.m.name || "" }; }) }));
+          return { id: e.id, name: e.m.name || "", admin: isOwnerEmail(e.m.email) }; }) }));
       } catch (err) { /* old browser */ }
       var byName = function (a, b) { return (a.m.name || "").localeCompare(b.m.name || ""); };
       waiting.sort(function (a, b) { return (a.m.requestedAt || 0) - (b.m.requestedAt || 0); });

@@ -37,30 +37,38 @@ service cloud.firestore {
       return uid + '_' + string(day);
     }
 
-    /* How many of a player's 60 days have begun - by Google's clock, not the
-       phone's, so changing a phone's date unlocks nothing. Day 1 is the start
-       date itself. A player's local day can begin up to 14 hours before the
-       same day in UTC (UTC+14 is the furthest ahead), hence the margin.      */
-    function openDays(start) {
-      return start == '' ? 0 : capAt60(daysBegun(start));
-    }
-    function daysBegun(start) {
+    /* The challenge's time zone: when a day starts and ends, for everyone.
+       Lebanon is UTC+2 in winter and UTC+3 in summer; a day is accepted if it
+       is that day at either offset (so the hour around the clock change is
+       generous). If the squad is elsewhere, change both numbers here and
+       CONFIG.timeZone in public/claude-bridge.js.                        */
+    function tzMin() { return 2; }
+    function tzMax() { return 3; }
+
+    /* A player's day number at this moment, by Google's clock - not the phone's -
+       with the clock shifted by `hours`. Day 1 is the start date itself.     */
+    function dayAt(start, hours) {
       let ymd = start.split('-');
-      let secs = (request.time + duration.value(14, 'h')
+      let secs = (request.time + duration.value(hours, 'h')
                   - timestamp.date(int(ymd[0]), int(ymd[1]), int(ymd[2]))).seconds();
       return secs < 0 ? 0 : secs / 86400 + 1;
     }
-    function capAt60(n) {
-      return n > 60 ? 60 : n;
+    /* Is `day` today for a player who started on `start`? Not yesterday, not
+       tomorrow: proof can only be sent on the day itself.                    */
+    function isToday(start, day) {
+      return start != '' && day >= dayAt(start, tzMin()) && day <= dayAt(start, tzMax());
+    }
+    /* today's day name(s), as a list; empty when no day is running */
+    function todayNames(start) {
+      return start == '' ? [] : namesBetween(dayAt(start, tzMin()), dayAt(start, tzMax()));
+    }
+    function namesBetween(lo, hi) {
+      return (lo < 1 || lo > 60) ? [] : dayNames()[lo - 1 : (hi > 60 ? 60 : hi)];
     }
     function dayNames() {
       return ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20',
               '21','22','23','24','25','26','27','28','29','30','31','32','33','34','35','36','37','38','39','40',
               '41','42','43','44','45','46','47','48','49','50','51','52','53','54','55','56','57','58','59','60'];
-    }
-    /* the names of the first n days; slicing [0:0] errors, so 0 is spelled out */
-    function daysUpTo(n) {
-      return n <= 0 ? [] : dayNames()[0:n];
     }
     function startOf(uid) {
       return get(/databases/$(database)/documents/progress/$(uid)).data.get('start', '');
@@ -122,12 +130,12 @@ service cloud.firestore {
          athlete off the challenge.                                          */
       allow write: if isOwner() && docId != request.auth.uid;
 
-      /* ...but as a player himself, the coach's own future days stay locked:
-         any day he adds must already have begun.                           */
+      /* ...but as a player himself, an admin ticks only his own today - like
+         every player. (Another admin can fix his past days.)               */
       allow create, update: if isOwner() && docId == request.auth.uid
         && request.resource.data.get('done', {})
              .diff(resource == null ? {} : resource.data.get('done', {})).addedKeys()
-             .hasOnly(daysUpTo(openDays(request.resource.data.get('start', ''))));
+             .hasOnly(todayNames(request.resource.data.get('start', '')));
       allow delete: if isOwner();
     }
 
@@ -136,8 +144,9 @@ service cloud.firestore {
       /* Only the athlete who sent it, and the coach. Never teammates. */
       allow read: if isOwner() || (signedIn() && resource.data.uid == request.auth.uid);
 
-      /* An athlete sends - or after a rejection, resends - proof for one of
-         their own days. Always as "pending"; never over an approved one.    */
+      /* An athlete sends - or, the same day, resends after a rejection -
+         proof for their own today. Always "pending"; never over an approved
+         one; never for a day already over.                                 */
       allow create, update: if approved()
         && request.resource.data.keys().hasOnly(['uid', 'day', 'status', 'note', 'submittedAt'])
         && request.resource.data.uid == request.auth.uid
@@ -147,7 +156,7 @@ service cloud.firestore {
         && request.resource.data.status == 'pending'
         && request.resource.data.get('note', '') is string
         && request.resource.data.get('note', '').size() <= 280
-        && request.resource.data.day <= openDays(startOf(request.auth.uid))
+        && isToday(startOf(request.auth.uid), request.resource.data.day)
         && (resource == null || resource.data.status != 'approved');
 
       /* The coach approves, rejects (with a reason) and deletes. */
@@ -164,7 +173,7 @@ service cloud.firestore {
         && id == proofId(request.auth.uid, request.resource.data.day)
         && request.resource.data.image is string
         && request.resource.data.image.size() < 1000000
-        && request.resource.data.day <= openDays(startOf(request.auth.uid))
+        && isToday(startOf(request.auth.uid), request.resource.data.day)
         && !(exists(/databases/$(database)/documents/proofs/$(id))
              && get(/databases/$(database)/documents/proofs/$(id)).data.status == 'approved');
 
