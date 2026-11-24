@@ -1,6 +1,7 @@
 {
   "projects": {
-    "eagle-strength-60": "eagle-strength-60"
+    "eagle-strength-60": "eagle-strength-60",
+    "default": "eagle-strength-60"
   },
   "targets": {},
   "etags": {}
