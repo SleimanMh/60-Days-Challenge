@@ -426,6 +426,17 @@
           }
         };
       },
+      /* several writes as one: all land, or none do, in one round trip */
+      batch: function (ops) {
+        var bt = store.writeBatch(FS);
+        ops.forEach(function (o) {
+          var ref = store.doc(FS, o.path);
+          if (o.op === "update") bt.update(ref, o.data);
+          else if (o.op === "delete") bt.delete(ref);
+          else bt.set(ref, o.data);
+        });
+        return bt.commit().catch(function (e) { throw translate(e); });
+      },
       collection: function (name) {
         function listen(q) {
           return function (cb, errcb) {

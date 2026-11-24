@@ -10,7 +10,7 @@
    Needs Java (the emulator is a Java program). Uses a demo project: nothing
    touches your real database.                                               */
 const { initializeTestEnvironment, assertFails, assertSucceeds } = require('@firebase/rules-unit-testing');
-const { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs } = require('firebase/firestore');
+const { doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, writeBatch } = require('firebase/firestore');
 const fs = require('fs');
 const path = require('path');
 let pass = 0, fail = 0;
@@ -112,6 +112,14 @@ const utcDay = n => { const d = new Date(); d.setUTCDate(d.getUTCDate() - n); re
   await t('coach clears his own start date', updateDoc(doc(coach, 'progress/coach'), { start: '', updated: 5 }), OK);
   await t('coach moves his start back, so today is day 2, and ticks it', setDoc(doc(coach, 'progress/coach'), { done: { '2': true }, start: utcDay(1), updated: 6 }), OK);
   await t('coach ticks another player\'s day 50, far ahead', updateDoc(doc(coach, 'progress/fut'), { 'done.50': true }), OK);
+
+  console.log('\n[batches] exactly what the page sends, saved as one');
+  const batch = (db, ops) => { const b = writeBatch(db); ops.forEach(([op, path, data]) => b[op](doc(db, path), data)); return b.commit(); };
+  await t('Dee sends day 4 photo + proof together', batch(dee, [['set', 'proofImages/dee_4', { uid:'dee', day:4, image: img }], ['set', 'proofs/dee_4', proof('dee', 4)]]), OK);
+  await t('Dee slips a self-approval into the batch: nothing saved', batch(dee, [['set', 'proofImages/dee_5', { uid:'dee', day:5, image: img }], ['set', 'proofs/dee_5', proof('dee', 5, { status: 'approved' })]]), DENY);
+  await t('...not even the photo half of it', getDoc(doc(coach, 'proofImages/dee_5')).then(s => { if (s.exists()) throw new Error('photo was saved'); }), OK);
+  await t('coach approves day 4: day + proof together', batch(coach, [['update', 'progress/dee', { 'done.4': true, updated: 9 }], ['update', 'proofs/dee_4', { status: 'approved', reviewedAt: 9 }]]), OK);
+  await t('Dee tries the coach\'s approval batch herself', batch(dee, [['update', 'progress/dee', { 'done.1': true }], ['update', 'proofs/dee_1', { status: 'approved' }]]), DENY);
 
   console.log('\n[unchanged] joining, names, levels');
   const newbie = as('newbie', 'newbie@x.com');

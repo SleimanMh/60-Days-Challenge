@@ -968,7 +968,7 @@ function syncClock(){
       clockWarned = true;
       try { say("Your phone's date is off, so the challenge is using the real date: " + new Date(realNow()).toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long" }) + "."); } catch(_){}
     }
-    if (Math.abs(CLOCK_SKEW - before) > 60e3) render();
+    if (Math.abs(CLOCK_SKEW - before) > 60e3) renderSoon();
   }).catch(function(){});
 }
 syncClock();
@@ -1523,6 +1523,14 @@ function renderGrid(){
   });
 }
 
+/* Data arrives in bursts (snapshots, photos, names). Redraw once per frame for
+   all of it, not once per arrival. User actions still redraw immediately. */
+var renderQueued = false;
+function renderSoon(){
+  if (renderQueued) return;
+  renderQueued = true;
+  requestAnimationFrame(function(){ renderQueued = false; render(); });
+}
 function render(){
   renderStatus(); renderMission(); renderAdmin(); renderBoard(); renderGrid();
   if (sheetEl && DAYS_FOR){ var db_ = sheetEl.querySelector(".days-body"); if (db_) drawDays(db_); }
@@ -1924,28 +1932,68 @@ function shrink(file){
   });
 }
 
-var IMG = {}, IMGP = {};
+/* Each photo is fetched once per page, at most 3 at a time, and shrunk to a
+   small thumbnail for the review list; the full photo opens on tap. Exactly
+   one redraw follows each arrival, however many redraws happen meanwhile.
+   (It used to queue a redraw per redraw: with 10 proofs waiting that was
+   over a thousand redraws and a frozen page.)                             */
+var IMG = {}, IMGP = {}, imgQueue = [], imgBusy = 0;
 function imgKey(id){ var pr = S.proofs[id]; return id + ":" + (pr ? pr.submittedAt : 0); }
+function pumpImages(){
+  while (imgBusy < 3 && imgQueue.length){
+    imgBusy++;
+    imgQueue.shift()().then(function(){ imgBusy--; pumpImages(); });
+  }
+}
+function thumbOf(src){
+  return new Promise(function(ok){
+    var im = new Image();
+    im.onload = function(){
+      var k = Math.min(1, 256 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(im.naturalWidth * k)); c.height = Math.max(1, Math.round(im.naturalHeight * k));
+      try { c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); ok(c.toDataURL("image/jpeg", .8)); } catch(_){ ok(src); }
+    };
+    im.onerror = function(){ ok(src); };
+    im.src = src;
+  });
+}
 function fetchProofImage(id){
   var key = imgKey(id);
   if (IMGP[key]) return IMGP[key];
   if (!DB) return Promise.resolve(null);
-  IMGP[key] = Promise.resolve(DB.doc("proofImages/" + id).get()).then(function(snap){
-    var src = snap && snap.exists && (snap.data() || {}).image;
-    IMG[key] = typeof src === "string" && /^data:image\/(jpeg|png|webp);base64,/.test(src) ? src : "error";
-    return IMG[key] === "error" ? null : IMG[key];
-  }, function(){ IMG[key] = "error"; return null; });
+  IMGP[key] = new Promise(function(done){
+    imgQueue.push(function(){
+      return Promise.resolve(DB.doc("proofImages/" + id).get()).then(function(snap){
+        var src = snap && snap.exists && (snap.data() || {}).image;
+        if (typeof src !== "string" || !/^data:image\/(jpeg|png|webp);base64,/.test(src)){ IMG[key] = "error"; done(null); return; }
+        return thumbOf(src).then(function(th){ IMG[key] = { full: src, thumb: th }; done(src); });
+      }).catch(function(){ IMG[key] = "error"; done(null); });
+    });
+    pumpImages();
+  });
+  IMGP[key].then(renderSoon);
   return IMGP[key];
+}
+/* several writes as one when the connection supports it, else in order */
+function commitAll(ops){
+  if (DB.batch) return DB.batch(ops);
+  return ops.reduce(function(chain, o){
+    return chain.then(function(){
+      var r = DB.doc(o.path);
+      return o.op === "update" ? r.update(o.data) : o.op === "delete" ? r.delete() : r.set(o.data);
+    });
+  }, Promise.resolve());
 }
 
 function submitProof(day, image, note){
   var id = proofId(S.uid, day), now = Date.now();
-  /* the photo first, so the coach never sees a proof without its picture */
-  return Promise.resolve(DB.doc("proofImages/" + id).set({ uid: S.uid, day: day, image: image }))
-    .then(function(){ return DB.doc("proofs/" + id).set({ uid: S.uid, day: day, status: "pending", note: note, submittedAt: now }); })
+  /* photo and proof together: the coach never sees one without the other */
+  return Promise.resolve(commitAll([
+      { op: "set", path: "proofImages/" + id, data: { uid: S.uid, day: day, image: image } },
+      { op: "set", path: "proofs/" + id, data: { uid: S.uid, day: day, status: "pending", note: note, submittedAt: now } }]))
     .then(function(){
       S.proofs[id] = { uid: S.uid, day: day, status: "pending", note: note, reason: "", submittedAt: now };
-      IMG[imgKey(id)] = image; IMGP[imgKey(id)] = Promise.resolve(image);
+      IMG[imgKey(id)] = { full: image, thumb: image }; IMGP[imgKey(id)] = Promise.resolve(image);
       render();
     });
 }
@@ -2051,12 +2099,15 @@ function renderReview(box){
     ? "Approve and the day is marked done for them. Reject and they're told why, and can send another photo."
     : "When an athlete sends a photo of their workout, it lands here for you to approve or reject."));
   list.forEach(function(x){
-    var card = el("div","rv"), key = imgKey(x.id), src = IMG[key];
+    var card = el("div","rv"), pic = IMG[imgKey(x.id)];
     var ib = el("button","rv-img"); ib.type = "button";
     ib.setAttribute("aria-label", "Open " + nameOf(x.uid) + "'s photo for day " + x.day);
-    if (src && src !== "error"){ var im = el("img"); im.src = src; im.alt = ""; ib.appendChild(im); ib.addEventListener("click", function(){ lightbox(src); }); }
-    else if (src === "error"){ ib.textContent = "Photo missing"; ib.disabled = true; }
-    else { ib.classList.add("loading"); fetchProofImage(x.id).then(function(){ render(); }); }
+    if (pic && pic !== "error"){
+      var im = el("img"); im.src = pic.thumb; im.alt = ""; ib.appendChild(im);
+      ib.addEventListener("click", function(){ lightbox(pic.full); });
+    }
+    else if (pic === "error"){ ib.textContent = "Photo missing"; ib.disabled = true; }
+    else { ib.classList.add("loading"); fetchProofImage(x.id); }
     card.appendChild(ib);
     var body = el("div","rv-body"), who = el("div","rv-who");
     who.appendChild(el("div","av",initial(x.uid)));
@@ -2097,14 +2148,16 @@ function review(x, ok, reason){
   pr.status = ok ? "approved" : "rejected"; pr.reason = ok ? "" : (reason || "").slice(0, 200);
   if (ok){ p.done = Object.assign({}, p.done); p.done[day] = true; S.people[uid] = p; }
   REJECTING = null; render();
-  var ref = DB.doc("progress/" + uid), step;
-  if (!ok) step = Promise.resolve();
-  else if (had && ref.update){ var f = { updated: now }; f["done." + day] = true; step = ref.update(f); }
-  else step = ref.set({ done: p.done, start: p.start || "", updated: now });
-  Promise.resolve(step).then(function(){
-    return DB.doc("proofs/" + x.id).update(ok ? { status: "approved", reviewedAt: now }
-                                              : { status: "rejected", reason: pr.reason, reviewedAt: now });
-  }).then(function(){ buzz(10); }, function(e){
+  /* the day and the proof change together, in one save: it shows at once,
+     and can never land half-done (day ticked, proof still "waiting")       */
+  var ops = [];
+  if (ok){
+    if (had){ var f = { updated: now }; f["done." + day] = true; ops.push({ op: "update", path: "progress/" + uid, data: f }); }
+    else ops.push({ op: "set", path: "progress/" + uid, data: { done: p.done, start: p.start || "", updated: now } });
+  }
+  ops.push({ op: "update", path: "proofs/" + x.id, data: ok ? { status: "approved", reviewedAt: now }
+                                                             : { status: "rejected", reason: pr.reason, reviewedAt: now } });
+  Promise.resolve(commitAll(ops)).then(function(){ buzz(10); }, function(e){
     pr.status = before; if (ok && !hadDay) delete p.done[day];
     render(); alert("Couldn't save that review: " + ((e && e.message) || e) + "\n\nCheck your connection and try again.");
   });
@@ -2153,13 +2206,12 @@ function coachSetDay(uid, day, on){
   if (pr && on && pr.status !== "approved"){ pr.status = "approved"; pr.reason = ""; }
   else if (pr && !on && pr.status === "approved"){ pr.status = "rejected"; pr.reason = "Unticked by " + COACH; }
   render();
-  var ref = DB.doc("progress/" + uid);
-  var w = had && ref.update ? ref.update({ done: done, updated: now }) : ref.set({ done: done, start: p.start || "", updated: now });
-  Promise.resolve(w).then(function(){
-    if (!pr || pr.status === prevStatus) return;
-    return DB.doc("proofs/" + pid).update(pr.status === "approved" ? { status: "approved", reviewedAt: now }
-                                                                   : { status: "rejected", reason: pr.reason, reviewedAt: now });
-  }).catch(function(e){
+  var ops = [had ? { op: "update", path: "progress/" + uid, data: { done: done, updated: now } }
+                 : { op: "set", path: "progress/" + uid, data: { done: done, start: p.start || "", updated: now } }];
+  if (pr && pr.status !== prevStatus)
+    ops.push({ op: "update", path: "proofs/" + pid, data: pr.status === "approved" ? { status: "approved", reviewedAt: now }
+                                                                                    : { status: "rejected", reason: pr.reason, reviewedAt: now } });
+  Promise.resolve(commitAll(ops)).catch(function(e){
     p.done = prevDone; if (pr){ pr.status = prevStatus; pr.reason = prevReason; } if (!had) delete S.people[uid];
     render(); alert("Couldn't save day " + day + ": " + ((e && e.message) || e));
   });
@@ -2189,7 +2241,7 @@ function listenProofs(){
         say(COACH + " didn't approve day " + b.day + (b.reason ? ": “" + b.reason + "”" : "") + ". Tap the day to send another photo.", "bad");
     });
     S.proofs = next; proofsSeen = true;
-    render();
+    renderSoon();
   }, function(){ proofsListening = false; });
 }
 
@@ -2214,7 +2266,7 @@ function writeLevels(){
 window.addEventListener("cb-members", function(e){
   var list = (e && e.detail) || [];
   S.members = list; list.forEach(function(m){ if (m.name) S.mnames[m.id] = m.name; });
-  render();
+  renderSoon();
 });
 /* "Today" changes at midnight even if nobody touches the page. */
 (function midnight(){
@@ -2244,7 +2296,7 @@ Promise.all([api.use("user"), api.use("db")]).then(function(r){
       ids.forEach(function(id){ S.names[id] = ""; });
       userApi.profiles(ids).then(function(ps){
         ids.forEach(function(id){ S.names[id] = (ps && ps[id] && ps[id].name) || ""; });
-        render();
+        renderSoon();
       }, function(){});
     }
     db.collection("progress").onSnapshot(function(snap){
@@ -2279,7 +2331,7 @@ Promise.all([api.use("user"), api.use("db")]).then(function(r){
       // first visit: add this athlete to the squad so Raji can assign a level
       if (!snap.metadata.fromCache && !had && !joined && S.mode === "live"){ joined = true; save(); }
       resolveNames(Object.keys(people));
-      render();
+      renderSoon();
     }, function(e){
       clearTimeout(timer); S.slow = false;
       S.mode = (e && e.code === "revoked") ? "readonly" : "error";
