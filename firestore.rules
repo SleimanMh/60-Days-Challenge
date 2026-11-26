@@ -58,12 +58,13 @@ service cloud.firestore {
     function isToday(start, day) {
       return start != '' && day >= dayAt(start, tzMin()) && day <= dayAt(start, tzMax());
     }
-    /* today's day name(s), as a list; empty when no day is running */
-    function todayNames(start) {
-      return start == '' ? [] : namesBetween(dayAt(start, tzMin()), dayAt(start, tzMax()));
+    /* every day so far: day 1 through today (an admin's own ticks) */
+    function daysSoFar(start) {
+      return start == '' ? [] : namesBetween(1, dayAt(start, tzMax()));
     }
     function namesBetween(lo, hi) {
-      return (lo < 1 || lo > 60) ? [] : dayNames()[lo - 1 : (hi > 60 ? 60 : hi)];
+      /* an empty slice errors in the rules engine, so "none" is spelled out */
+      return (lo < 1 || lo > 60 || hi < lo) ? [] : dayNames()[lo - 1 : (hi > 60 ? 60 : hi)];
     }
     function dayNames() {
       return ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20',
@@ -130,12 +131,12 @@ service cloud.firestore {
          athlete off the challenge.                                          */
       allow write: if isOwner() && docId != request.auth.uid;
 
-      /* ...but as a player himself, an admin ticks only his own today - like
-         every player. (Another admin can fix his past days.)               */
+      /* ...and his own days too: today or any day already gone. Only his own
+         days ahead stay locked.                                            */
       allow create, update: if isOwner() && docId == request.auth.uid
         && request.resource.data.get('done', {})
              .diff(resource == null ? {} : resource.data.get('done', {})).addedKeys()
-             .hasOnly(todayNames(request.resource.data.get('start', '')));
+             .hasOnly(daysSoFar(request.resource.data.get('start', '')));
       allow delete: if isOwner();
     }
 

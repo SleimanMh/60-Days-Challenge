@@ -257,8 +257,10 @@ new projects need a billing account for it.
 **Today only, double days, three strikes.**
 
 - **Proof can only be sent on the day itself.** Past days and future days are
-  locked for athletes. The same goes for admins' own days. Another admin can
-  fix a past day for them.
+  locked for athletes. Admins are different: they can tick their own today or
+  any past day directly, but never their own future days. With **Days** in
+  Admin · Athletes, they can tick or untick any day for any other player:
+  past, today or ahead.
 - **A missed day doubles the next one.** A day is missed once it ends without
   being approved. A proof sent on time and still waiting for review does not
   count, but a rejected one does. The next day's workout shows "×2": double
@@ -352,7 +354,7 @@ somebody else, see a teammate's photo, approve themselves or promote
 themselves. All of that is enforced in `firestore.rules`, on Firebase's
 servers, not in the page. A modified page can't get around it.
 
-**Testing the rules.** `tests/rules.test.js` checks all of that (84 cases, including today-only and the date checks)
+**Testing the rules.** `tests/rules.test.js` checks all of that (86 cases, including today-only and the date checks)
 against Google's real Firestore emulator. Re-run it after any edit to
 `firestore.rules` (it needs Java):
 

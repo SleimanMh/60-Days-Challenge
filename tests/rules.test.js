@@ -121,9 +121,11 @@ const proof = (uid, day, extra) => Object.assign({ uid, day, status: 'pending', 
   await t('coach deletes a proof and a photo', Promise.all([deleteDoc(doc(coach, 'proofs/lea_' + T.lea)), deleteDoc(doc(coach, 'proofImages/sam_' + T.sam))]), OK);
   await t('Sam deletes his own proof', deleteDoc(doc(sam, 'proofs/sam_' + T.sam)), DENY);
 
-  console.log('\n[admins as players] own days: today only');
+  console.log('\n[admins as players] own days: today or any past day, never ahead');
   await t(`coach (on day ${T.coach}) ticks his own today`, updateDoc(doc(coach, 'progress/coach'), { ['done.' + T.coach]: true }), OK);
-  await t('coach ticks his own yesterday', updateDoc(doc(coach, 'progress/coach'), { ['done.' + (T.coach - 1)]: true }), DENY);
+  await t('coach ticks his own yesterday', updateDoc(doc(coach, 'progress/coach'), { ['done.' + (T.coach - 1)]: true }), OK);
+  await t('coach ticks his own day 1, long gone', updateDoc(doc(coach, 'progress/coach'), { 'done.1': true }), OK);
+  await t('coach ticks his own tomorrow', updateDoc(doc(coach, 'progress/coach'), { ['done.' + (dayAt(START.coach, 3) + 1)]: true }), DENY);
   await t('coach ticks his own day after tomorrow', updateDoc(doc(coach, 'progress/coach'), { ['done.' + (T.coach + 2)]: true }), DENY);
   await t('coach unticks his own day', updateDoc(doc(coach, 'progress/coach'), { done: {} }), OK);
   await t('coach moves his own start to the future and ticks day 1', setDoc(doc(coach, 'progress/coach'), { done: { '1': true }, start: utcDay(-30), updated: 2 }), DENY);
